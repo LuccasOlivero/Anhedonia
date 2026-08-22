@@ -221,15 +221,48 @@ can be mocked in tests without hitting the real API.
 
 ## Visual Style
 
-All styling uses **Tailwind CSS** utility classes (no separate CSS files beyond
-`globals.css`). The visual direction is inspired by "Pet Society" (the
-classic Facebook pet game): a warm cream/amber background, white cards with
-thick rounded corners and soft shadows, candy-colored pill-shaped buttons
-and inputs, and a friendly rounded display font (Baloo 2, via
-`next/font/google`), applied globally in the root layout. The stat bars
-keep the approved threshold-based coloring (green/amber/red by value) —
-that's a functional urgency signal, not just decoration — reskinned as
-rounded pill progress bars with a per-stat icon (🍖/😊/⚡/✨).
+All styling uses **Tailwind CSS** utility classes (arbitrary-value syntax
+for custom colors/shadows, no `tailwind.config` changes needed; no
+separate CSS files beyond `globals.css`, which holds one small custom
+keyframe). The visual direction is inspired by "Pet Society" (the classic
+Facebook pet game), with a specific signature rather than a generic
+"pastel app" look: cards are styled as carved wood-and-parchment
+signboards, and buttons are glossy candy pills that physically depress on
+click.
+
+**Design tokens** (named hex values, used consistently everywhere — do not
+substitute nearby Tailwind palette colors):
+- `cream` `#FFF9EC` (card interior), `sky` `#BEE7F5` / `grass` `#B7E4A0`
+  (top/bottom of the outdoor scene gradient behind every page)
+- `wood-dark` `#6B4226` (outer card border), `wood-light` `#C89B6C`
+  (inner card ring)
+- `ink` `#4A3222` (all body text — never pure black)
+- Candy accents (light→base gradient per action): Feed coral
+  `#FFB199`→`#FF8966`, Play bubblegum `#FF9EC4`→`#FF6FA5`, Bathe aqua
+  `#7EE8DB`→`#4FD1C5`, Sleep lavender `#C4B5FD`→`#A78BFA`, Medicine cherry
+  `#FF6F8E`→`#F4436C`
+- Stat thresholds (keeps the approved green/amber/red urgency signal,
+  warmed to match): leaf `#8EE896`→`#6FCF7B` (≥60), honey
+  `#F7CE7A`→`#F2B84B` (30-59), cherry `#FF8FA3`→`#F4436C` (<30)
+
+**Type system:** two roles, not one flat font. **Baloo 2** (600/700) is the
+display face, used only for headings, the pet's name, and button labels.
+**Quicksand** (400/500/600) is the body face, used for everything else
+(labels, inputs, stat numbers, helper/error text). Both load via
+`next/font/google` as CSS variables and are applied with Tailwind's
+`font-[family-name:var(--font-x)]` syntax.
+
+**Card signature:** every card (auth forms, onboarding form, pet
+dashboard) uses the same "signboard" treatment — a thick dark-wood outer
+border, a lighter wood inner ring, a parchment-cream interior, an inset
+top shadow (carved look), and a drop shadow (sitting proud of the page).
+This one consistent, reused frame is the app's signature element.
+
+**Motion:** deliberately restrained — no page-load fade-ins, no
+decorative hover effects. The only motion is functional: buttons give
+physical press feedback (drop shadow flattens and the button nudges down
+1-3px on click, restored on release), and the onboarding egg does a slow
+side-to-side wobble (not a generic loading bounce) while sprites generate.
 
 ## Dashboard (`/pet`)
 

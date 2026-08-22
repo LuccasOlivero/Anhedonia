@@ -110,17 +110,28 @@ Add to `package.json` `"scripts"`:
 Run: `npx vitest run`
 Expected: exits reporting "No test files found" — this confirms the config loads without error. Real tests arrive in Task 3.
 
-- [ ] **Step 7: Set the app-wide visual design (font + background)**
+- [ ] **Step 7: Set the app-wide visual design (fonts + design tokens)**
 
-The visual direction for this app is inspired by "Pet Society" (the classic Facebook pet game): warm cream/amber backgrounds, white cards with thick rounded corners and soft shadows, candy-colored pill buttons, and a friendly rounded display font. This step sets the font and base background globally so every later page inherits it.
+The visual direction for this app is inspired by "Pet Society" (the classic Facebook pet game), pushed past generic "pastel app" territory with a specific signature: cards styled as carved wood-and-parchment signboards, buttons with a glossy candy-shell gloss that physically depress on click, and a two-role type system instead of one flat font. This step sets it up globally so every later page inherits it.
+
+**Design tokens** (used verbatim as Tailwind arbitrary values throughout the rest of the plan — do not substitute nearby Tailwind palette names for these):
+- `cream` `#FFF9EC` (card interior / parchment)
+- `sky` `#BEE7F5` and `grass` `#B7E4A0` (top/bottom of the outdoor scene gradient every page sits on)
+- `wood-dark` `#6B4226` (outer card border) and `wood-light` `#C89B6C` (inner card ring)
+- `ink` `#4A3222` (all body text — never pure black)
+- Candy accents (each a light→base gradient pair for the glossy button fill): Feed coral `#FFB199` → `#FF8966`, Play bubblegum `#FF9EC4` → `#FF6FA5`, Bathe aqua `#7EE8DB` → `#4FD1C5`, Sleep lavender `#C4B5FD` → `#A78BFA`, Medicine cherry `#FF6F8E` → `#F4436C`
+- Stat thresholds (keep the approved green/amber/red urgency signal, warmed to match): leaf `#8EE896` → `#6FCF7B` (≥60), honey `#F7CE7A` → `#F2B84B` (30-59), cherry `#FF8FA3` → `#F4436C` (<30)
+
+**Type system:** Baloo 2 (weights 600/700) is the **display** face — used only for page headings, the pet's name, and button labels, never for body copy. Quicksand (weights 400/500/600) is the **body** face — every label, input, stat number, and helper/error message. Both are exposed as CSS variables via `next/font/google` and applied with Tailwind's `font-[family-name:var(--font-x)]` arbitrary-value syntax, so no `tailwind.config` changes are needed (works the same on Tailwind v3 or v4).
 
 Replace `app/layout.tsx`:
 ```tsx
 import type { Metadata } from "next";
-import { Baloo_2 } from "next/font/google";
+import { Baloo_2, Quicksand } from "next/font/google";
 import "./globals.css";
 
-const baloo = Baloo_2({ subsets: ["latin"], weight: ["400", "600", "700"] });
+const baloo = Baloo_2({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-display" });
+const quicksand = Quicksand({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
 
 export const metadata: Metadata = {
   title: "Pets Forever",
@@ -130,7 +141,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${baloo.className} bg-amber-50 text-stone-800 min-h-screen antialiased`}>
+      <body
+        className={`${baloo.variable} ${quicksand.variable} font-[family-name:var(--font-body)] bg-[#FFF9EC] text-[#4A3222] min-h-screen antialiased`}
+      >
         {children}
       </body>
     </html>
@@ -138,7 +151,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-Run: `npm run dev`, open `http://localhost:3000` (still just the default create-next-app placeholder page at this point). Confirm the page background is cream-colored and text renders in the rounded Baloo 2 font, not the default system font.
+Add a gentle idle animation to `app/globals.css` (used later for the incubating egg — a slow side-to-side wobble reads as "about to hatch," unlike a generic loading bounce):
+```css
+@keyframes gentle-wobble {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+.animate-wobble {
+  animation: gentle-wobble 1.6s ease-in-out infinite;
+}
+```
+
+Run: `npm run dev`, open `http://localhost:3000` (still just the default create-next-app placeholder page at this point). Confirm the page background is parchment-cream and text renders in the rounded Quicksand body font, not the default system font.
 
 - [ ] **Step 8: Add the env var template**
 
@@ -1458,7 +1482,7 @@ export async function signOut() {
 
 - [ ] **Step 2: Build the login/signup form**
 
-Visual style for every page from here on: Pet Society-inspired — white cards with thick amber borders, rounded-3xl corners, soft shadows, pill-shaped inputs/buttons, candy accent colors. `app/layout.tsx` (Task 1 Step 7) already sets the cream background and rounded display font globally.
+Visual style for every page from here on: cards are "signboards" — a thick dark-wood outer border with a lighter wood inner ring around a parchment interior, an inset top shadow (carved look) plus a drop shadow (sitting proud of the page). Buttons are glossy candy pills with a physical press (shadow flattens, button nudges down on click). Headings/buttons use the Baloo 2 display font (`font-[family-name:var(--font-display)]`); everything else inherits the Quicksand body font set globally in `app/layout.tsx` (Task 1 Step 7).
 
 Create `app/login/LoginForm.tsx`:
 ```tsx
@@ -1468,6 +1492,13 @@ import { useActionState } from 'react';
 import { signIn, signUp } from './actions';
 
 const initialState = { error: '' };
+const cardClass =
+  'rounded-[2rem] border-8 border-[#6B4226] ring-4 ring-inset ring-[#C89B6C] bg-[#FFF9EC] p-6 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.25)] space-y-4';
+const inputClass =
+  'w-full rounded-full border-2 border-[#C89B6C] bg-white px-4 py-2 text-[#4A3222] focus:border-[#FF6FA5] focus:outline-none';
+const labelClass = 'text-sm font-semibold text-[#8B5E3C]';
+const buttonClass =
+  'w-full rounded-full py-2 font-[family-name:var(--font-display)] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.25)] transition-all active:translate-y-[3px] active:shadow-[0_1px_0_rgba(0,0,0,0.25)] disabled:opacity-50';
 
 export function LoginForm() {
   const [signInState, signInAction, signInPending] = useActionState(signIn, initialState);
@@ -1475,71 +1506,49 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
-      <form action={signInAction} className="space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg">
-        <h2 className="text-center text-2xl font-bold text-stone-700">Log in</h2>
+      <form action={signInAction} className={cardClass}>
+        <h2 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Log in</h2>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-stone-500">Email</span>
-          <input
-            type="email"
-            name="email"
-            required
-            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-pink-400 focus:outline-none"
-          />
+          <span className={labelClass}>Email</span>
+          <input type="email" name="email" required className={inputClass} />
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-stone-500">Password</span>
-          <input
-            type="password"
-            name="password"
-            required
-            minLength={6}
-            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-pink-400 focus:outline-none"
-          />
+          <span className={labelClass}>Password</span>
+          <input type="password" name="password" required minLength={6} className={inputClass} />
         </label>
         {signInState?.error && (
-          <p role="alert" className="text-center text-sm font-semibold text-rose-500">
+          <p role="alert" className="text-center text-sm font-semibold text-[#F4436C]">
             {signInState.error}
           </p>
         )}
         <button
           type="submit"
           disabled={signInPending}
-          className="w-full rounded-full bg-pink-400 py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50"
+          className={`${buttonClass} bg-gradient-to-b from-[#7EE8DB] to-[#4FD1C5]`}
         >
           Log in
         </button>
       </form>
 
-      <form action={signUpAction} className="space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg">
-        <h2 className="text-center text-2xl font-bold text-stone-700">Sign up</h2>
+      <form action={signUpAction} className={cardClass}>
+        <h2 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Sign up</h2>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-stone-500">Email</span>
-          <input
-            type="email"
-            name="email"
-            required
-            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-teal-400 focus:outline-none"
-          />
+          <span className={labelClass}>Email</span>
+          <input type="email" name="email" required className={inputClass} />
         </label>
         <label className="block space-y-1">
-          <span className="text-sm font-semibold text-stone-500">Password</span>
-          <input
-            type="password"
-            name="password"
-            required
-            minLength={6}
-            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-teal-400 focus:outline-none"
-          />
+          <span className={labelClass}>Password</span>
+          <input type="password" name="password" required minLength={6} className={inputClass} />
         </label>
         {signUpState?.error && (
-          <p role="alert" className="text-center text-sm font-semibold text-rose-500">
+          <p role="alert" className="text-center text-sm font-semibold text-[#F4436C]">
             {signUpState.error}
           </p>
         )}
         <button
           type="submit"
           disabled={signUpPending}
-          className="w-full rounded-full bg-teal-400 py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50"
+          className={`${buttonClass} bg-gradient-to-b from-[#FFB199] to-[#FF8966]`}
         >
           Sign up
         </button>
@@ -1555,8 +1564,8 @@ import { LoginForm } from './LoginForm';
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-sky-100 to-amber-50 px-4 py-12">
-      <h1 className="text-4xl font-bold text-stone-700">🐾 Pets Forever</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-12">
+      <h1 className="text-4xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">🐾 Pets Forever</h1>
       <LoginForm />
     </main>
   );
@@ -1782,6 +1791,11 @@ import { createPet } from './actions';
 import { validatePhotoFiles } from '@/lib/validate-photo-files';
 
 const initialState = { error: '' };
+const cardClass =
+  'rounded-[2rem] border-8 border-[#6B4226] ring-4 ring-inset ring-[#C89B6C] bg-[#FFF9EC] p-6 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.25)]';
+const inputClass =
+  'w-full rounded-full border-2 border-[#C89B6C] bg-white px-4 py-2 text-[#4A3222] focus:border-[#FF6FA5] focus:outline-none';
+const labelClass = 'text-sm font-semibold text-[#8B5E3C]';
 
 export function OnboardingForm() {
   const [state, formAction, pending] = useActionState(createPet, initialState);
@@ -1797,29 +1811,21 @@ export function OnboardingForm() {
 
   if (pending) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-3xl border-4 border-amber-200 bg-white p-10 shadow-lg">
-        <span className="animate-bounce text-5xl">🥚</span>
-        <p className="text-lg font-bold text-stone-600">Incubating your pet...</p>
+      <div className={`flex flex-col items-center gap-4 ${cardClass} p-10`}>
+        <span className="animate-wobble text-5xl">🥚</span>
+        <p className="text-lg font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Incubating your pet...</p>
       </div>
     );
   }
 
   return (
-    <form
-      action={formAction}
-      className="mx-auto w-full max-w-sm space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg"
-    >
+    <form action={formAction} className={`mx-auto w-full max-w-sm space-y-4 ${cardClass}`}>
       <label className="block space-y-1">
-        <span className="text-sm font-semibold text-stone-500">Pet name</span>
-        <input
-          type="text"
-          name="name"
-          required
-          className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-pink-400 focus:outline-none"
-        />
+        <span className={labelClass}>Pet name</span>
+        <input type="text" name="name" required className={inputClass} />
       </label>
       <label className="block space-y-1">
-        <span className="text-sm font-semibold text-stone-500">Photos (1-3, max 5MB each)</span>
+        <span className={labelClass}>Photos (1-3, max 5MB each)</span>
         <input
           type="file"
           name="photos"
@@ -1827,22 +1833,22 @@ export function OnboardingForm() {
           multiple
           required
           onChange={handleFilesChange}
-          className="w-full rounded-2xl border-2 border-dashed border-amber-300 px-4 py-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-amber-200 file:px-3 file:py-1 file:font-semibold"
+          className="w-full rounded-2xl border-2 border-dashed border-[#C89B6C] px-4 py-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-[#F2B84B] file:px-3 file:py-1 file:font-semibold file:text-[#4A3222]"
         />
       </label>
       {previews.length > 0 && (
         <div className="flex gap-2">
           {previews.map((src) => (
-            <img key={src} src={src} alt="Pet preview" className="h-16 w-16 rounded-2xl border-2 border-amber-200 object-cover" />
+            <img key={src} src={src} alt="Pet preview" className="h-16 w-16 rounded-2xl border-2 border-[#C89B6C] object-cover" />
           ))}
         </div>
       )}
-      {clientError && <p role="alert" className="text-sm font-semibold text-rose-500">{clientError}</p>}
-      {state?.error && <p role="alert" className="text-sm font-semibold text-rose-500">{state.error}</p>}
+      {clientError && <p role="alert" className="text-sm font-semibold text-[#F4436C]">{clientError}</p>}
+      {state?.error && <p role="alert" className="text-sm font-semibold text-[#F4436C]">{state.error}</p>}
       <button
         type="submit"
         disabled={!!clientError}
-        className="w-full rounded-full bg-pink-400 py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50"
+        className="w-full rounded-full bg-gradient-to-b from-[#FFB199] to-[#FF8966] py-2 font-[family-name:var(--font-display)] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.25)] transition-all active:translate-y-[3px] active:shadow-[0_1px_0_rgba(0,0,0,0.25)] disabled:opacity-50"
       >
         Create my pet
       </button>
@@ -1866,8 +1872,8 @@ export default async function OnboardingPage() {
   if (pet) redirect('/pet');
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-sky-100 to-amber-50 px-4 py-12">
-      <h1 className="text-center text-3xl font-bold text-stone-700">Welcome! Let&apos;s create your pet.</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-12">
+      <h1 className="text-center text-3xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Welcome! Let&apos;s create your pet.</h1>
       <OnboardingForm />
     </main>
   );
@@ -1912,9 +1918,9 @@ const STAT_ICONS: Record<string, string> = {
 };
 
 function colorFor(value: number): string {
-  if (value >= 60) return 'bg-emerald-400';
-  if (value >= 30) return 'bg-amber-400';
-  return 'bg-rose-400';
+  if (value >= 60) return 'bg-gradient-to-b from-[#8EE896] to-[#6FCF7B]';
+  if (value >= 30) return 'bg-gradient-to-b from-[#F7CE7A] to-[#F2B84B]';
+  return 'bg-gradient-to-b from-[#FF8FA3] to-[#F4436C]';
 }
 
 export function StatBar({ label, value }: { label: string; value: number }) {
@@ -1922,11 +1928,11 @@ export function StatBar({ label, value }: { label: string; value: number }) {
     <div className="flex items-center gap-3">
       <span className="text-xl">{STAT_ICONS[label] ?? ''}</span>
       <div className="flex-1">
-        <div className="mb-1 flex justify-between text-xs font-semibold text-stone-500">
+        <div className="mb-1 flex justify-between text-xs font-semibold text-[#8B5E3C]">
           <span>{label}</span>
           <span>{Math.round(value)}%</span>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-amber-100">
+        <div className="h-3 w-full overflow-hidden rounded-full bg-[#F0DEB4] ring-1 ring-inset ring-[#6B4226]/20">
           <div className={`h-full rounded-full transition-all ${colorFor(value)}`} style={{ width: `${value}%` }} />
         </div>
       </div>
@@ -1966,16 +1972,16 @@ export default async function PetPage() {
   const mood = computeMood(stats, isSick, petRow.is_sleeping);
 
   return (
-    <main className="flex min-h-screen flex-col items-center gap-6 bg-gradient-to-b from-sky-100 to-green-100 px-4 py-10">
-      <div className="w-full max-w-sm space-y-6 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg">
-        <h1 className="text-center text-2xl font-bold text-stone-700">{petRow.name}</h1>
+    <main className="flex min-h-screen flex-col items-center gap-6 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-10">
+      <div className="w-full max-w-sm space-y-6 rounded-[2rem] border-8 border-[#6B4226] ring-4 ring-inset ring-[#C89B6C] bg-[#FFF9EC] p-6 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.25)]">
+        <h1 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">{petRow.name}</h1>
 
         <div className="flex flex-col items-center">
-          <div className="-mb-4 h-6 w-40 rounded-full bg-green-200/60 blur-sm" />
+          <div className="-mb-4 h-6 w-40 rounded-full bg-[#8FBF6A]/50 blur-sm" />
           {lifeStage === 'egg' ? (
             <>
               <img src="/egg-sprite.svg" alt="Egg" width={180} height={180} className="drop-shadow-lg" />
-              <p className="mt-2 text-sm font-semibold text-stone-500">Your pet is about to hatch.</p>
+              <p className="mt-2 text-sm font-semibold text-[#8B5E3C]">Your pet is about to hatch.</p>
             </>
           ) : (
             <img
@@ -2155,12 +2161,12 @@ Create `app/pet/ActionButtons.tsx`:
 import { useState, useTransition } from 'react';
 import { feed, play, bathe, toggleSleep, medicine } from './actions';
 
-const BUTTON_COLOR = {
-  feed: 'bg-orange-400',
-  play: 'bg-pink-400',
-  bathe: 'bg-teal-400',
-  sleep: 'bg-indigo-400',
-  medicine: 'bg-rose-500',
+const BUTTON_GRADIENT = {
+  feed: 'from-[#FFB199] to-[#FF8966]',
+  play: 'from-[#FF9EC4] to-[#FF6FA5]',
+  bathe: 'from-[#7EE8DB] to-[#4FD1C5]',
+  sleep: 'from-[#C4B5FD] to-[#A78BFA]',
+  medicine: 'from-[#FF6F8E] to-[#F4436C]',
 };
 
 export function ActionButtons({ isSleeping, isSick }: { isSleeping: boolean; isSick: boolean }) {
@@ -2187,29 +2193,29 @@ export function ActionButtons({ isSleeping, isSick }: { isSleeping: boolean; isS
     });
   }
 
-  const buttonClass = (color: string) =>
-    `rounded-full ${color} py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50`;
+  const buttonClass = (gradient: string) =>
+    `rounded-full bg-gradient-to-b ${gradient} py-2 font-[family-name:var(--font-display)] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.25)] transition-all active:translate-y-[3px] active:shadow-[0_1px_0_rgba(0,0,0,0.25)] disabled:opacity-50 disabled:active:translate-y-0 disabled:active:shadow-[0_4px_0_rgba(0,0,0,0.25)]`;
 
   return (
     <div className="space-y-3">
-      {showEating && <p className="text-center text-sm font-semibold text-stone-500">😋 Eating...</p>}
-      {error && <p role="alert" className="text-center text-sm font-semibold text-rose-500">{error}</p>}
+      {showEating && <p className="text-center text-sm font-semibold text-[#8B5E3C]">😋 Eating...</p>}
+      {error && <p role="alert" className="text-center text-sm font-semibold text-[#F4436C]">{error}</p>}
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={handleFeed} disabled={isPending} className={buttonClass(BUTTON_COLOR.feed)}>
+        <button onClick={handleFeed} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.feed)}>
           🍖 Feed
         </button>
-        <button onClick={() => runAction(play)} disabled={isPending || isSleeping} className={buttonClass(BUTTON_COLOR.play)}>
+        <button onClick={() => runAction(play)} disabled={isPending || isSleeping} className={buttonClass(BUTTON_GRADIENT.play)}>
           🎮 Play
         </button>
-        <button onClick={() => runAction(bathe)} disabled={isPending} className={buttonClass(BUTTON_COLOR.bathe)}>
+        <button onClick={() => runAction(bathe)} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.bathe)}>
           🛁 Bathe
         </button>
-        <button onClick={() => runAction(toggleSleep)} disabled={isPending} className={buttonClass(BUTTON_COLOR.sleep)}>
+        <button onClick={() => runAction(toggleSleep)} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.sleep)}>
           {isSleeping ? '☀️ Wake' : '💤 Sleep'}
         </button>
       </div>
       {isSick && (
-        <button onClick={() => runAction(medicine)} disabled={isPending} className={`w-full ${buttonClass(BUTTON_COLOR.medicine)}`}>
+        <button onClick={() => runAction(medicine)} disabled={isPending} className={`w-full ${buttonClass(BUTTON_GRADIENT.medicine)}`}>
           💊 Medicine
         </button>
       )}
