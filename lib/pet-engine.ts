@@ -93,3 +93,43 @@ export function computeIsSick(pet: PetRow, now: Date): boolean {
   const hoursSinceCrossing = (now.getTime() - earliestCrossing.getTime()) / (60 * 60 * 1000);
   return hoursSinceCrossing > SICK_THRESHOLD_HOURS;
 }
+
+export type MoodState = Exclude<SpriteState, 'eating'>;
+
+export function computeMood(stats: Stats, isSick: boolean, isSleeping: boolean): MoodState {
+  if (isSleeping) return 'sleeping';
+  if (isSick) return 'sick';
+  if (stats.cleanliness < 30) return 'dirty';
+  if (stats.happiness < 30) return 'sad';
+  return 'happy';
+}
+
+export function feed(stats: Stats): Stats {
+  return { ...stats, hunger: clamp(stats.hunger + 30) };
+}
+
+export function bathe(stats: Stats): Stats {
+  return { ...stats, cleanliness: clamp(stats.cleanliness + 40) };
+}
+
+export function toggleSleep(isSleeping: boolean): boolean {
+  return !isSleeping;
+}
+
+export function play(stats: Stats, isSleeping: boolean): Stats | { error: string } {
+  if (isSleeping) return { error: 'Cannot play while pet is sleeping' };
+  return {
+    ...stats,
+    happiness: clamp(stats.happiness + 15),
+    energy: clamp(stats.energy - 5),
+  };
+}
+
+export function medicine(stats: Stats, isSick: boolean): Stats | { error: string } {
+  if (!isSick) return { error: 'Pet is not sick' };
+  return {
+    ...stats,
+    hunger: Math.max(stats.hunger, 50),
+    cleanliness: Math.max(stats.cleanliness, 50),
+  };
+}

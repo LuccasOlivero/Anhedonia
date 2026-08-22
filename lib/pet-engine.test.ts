@@ -199,3 +199,112 @@ describe('computeIsSick', () => {
     expect(computeIsSick(pet, now)).toBe(true);
   });
 });
+
+import { computeMood } from './pet-engine';
+
+const fullStats = { hunger: 100, happiness: 100, energy: 100, cleanliness: 100 };
+
+describe('computeMood', () => {
+  it('is sleeping when isSleeping is true, regardless of other flags', () => {
+    expect(computeMood(fullStats, true, true)).toBe('sleeping');
+  });
+
+  it('is sick when isSick is true and not sleeping', () => {
+    expect(computeMood(fullStats, true, false)).toBe('sick');
+  });
+
+  it('is dirty when cleanliness is below 30, and not sick/sleeping', () => {
+    expect(computeMood({ ...fullStats, cleanliness: 29 }, false, false)).toBe('dirty');
+  });
+
+  it('is sad when happiness is below 30, and not dirty/sick/sleeping', () => {
+    expect(computeMood({ ...fullStats, happiness: 29 }, false, false)).toBe('sad');
+  });
+
+  it('is happy by default', () => {
+    expect(computeMood(fullStats, false, false)).toBe('happy');
+  });
+
+  it('prioritizes sick over dirty when both apply', () => {
+    expect(computeMood({ ...fullStats, cleanliness: 10 }, true, false)).toBe('sick');
+  });
+});
+
+import { feed, bathe, toggleSleep } from './pet-engine';
+
+describe('feed', () => {
+  it('increases hunger by 30, clamped at 100', () => {
+    expect(feed({ ...fullStats, hunger: 50 }).hunger).toBe(80);
+    expect(feed({ ...fullStats, hunger: 90 }).hunger).toBe(100);
+  });
+
+  it('does not change other stats', () => {
+    const result = feed({ ...fullStats, hunger: 50, happiness: 40 });
+    expect(result.happiness).toBe(40);
+  });
+});
+
+describe('bathe', () => {
+  it('increases cleanliness by 40, clamped at 100', () => {
+    expect(bathe({ ...fullStats, cleanliness: 50 }).cleanliness).toBe(90);
+    expect(bathe({ ...fullStats, cleanliness: 80 }).cleanliness).toBe(100);
+  });
+});
+
+describe('toggleSleep', () => {
+  it('flips false to true', () => {
+    expect(toggleSleep(false)).toBe(true);
+  });
+
+  it('flips true to false', () => {
+    expect(toggleSleep(true)).toBe(false);
+  });
+});
+
+import { play } from './pet-engine';
+
+describe('play', () => {
+  it('increases happiness by 15 and decreases energy by 5 when not sleeping', () => {
+    const result = play({ ...fullStats, happiness: 50, energy: 50 }, false);
+    expect('error' in result).toBe(false);
+    if (!('error' in result)) {
+      expect(result.happiness).toBe(65);
+      expect(result.energy).toBe(45);
+    }
+  });
+
+  it('clamps happiness at 100 and energy at 0', () => {
+    const result = play({ ...fullStats, happiness: 95, energy: 2 }, false);
+    if (!('error' in result)) {
+      expect(result.happiness).toBe(100);
+      expect(result.energy).toBe(0);
+    }
+  });
+
+  it('is rejected with no state change when sleeping', () => {
+    const result = play(fullStats, true);
+    expect(result).toEqual({ error: 'Cannot play while pet is sleeping' });
+  });
+});
+
+import { medicine } from './pet-engine';
+
+describe('medicine', () => {
+  it('raises hunger and cleanliness to at least 50 when sick', () => {
+    const result = medicine({ ...fullStats, hunger: 0, cleanliness: 0 }, true);
+    expect(result).toEqual({ ...fullStats, hunger: 50, cleanliness: 50 });
+  });
+
+  it('does not lower hunger/cleanliness if already above 50', () => {
+    const result = medicine({ ...fullStats, hunger: 80, cleanliness: 90 }, true);
+    if (!('error' in result)) {
+      expect(result.hunger).toBe(80);
+      expect(result.cleanliness).toBe(90);
+    }
+  });
+
+  it('is rejected with no state change when not sick', () => {
+    const result = medicine({ ...fullStats, hunger: 0, cleanliness: 0 }, false);
+    expect(result).toEqual({ error: 'Pet is not sick' });
+  });
+});
