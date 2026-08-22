@@ -62,3 +62,34 @@ export function computeCurrentStats(pet: PetRow, now: Date): Stats {
     cleanliness: clamp(pet.cleanliness - elapsedHours * DECAY_PER_HOUR.cleanliness),
   };
 }
+
+export function computeIsSick(pet: PetRow, now: Date): boolean {
+  const createdAt = new Date(pet.created_at);
+  if (computeLifeStage(createdAt, now) === 'egg') return false;
+
+  const lastUpdatedAt = new Date(pet.last_updated_at);
+  const hatchTime = new Date(createdAt.getTime() + LIFE_STAGE_DAYS.egg * 24 * 60 * 60 * 1000);
+  const decayStart = lastUpdatedAt > hatchTime ? lastUpdatedAt : hatchTime;
+
+  const currentStats = computeCurrentStats(pet, now);
+  const criticalStats: Array<{ storedValue: number; ratePerHour: number; currentValue: number }> = [
+    { storedValue: pet.hunger, ratePerHour: DECAY_PER_HOUR.hunger, currentValue: currentStats.hunger },
+    { storedValue: pet.cleanliness, ratePerHour: DECAY_PER_HOUR.cleanliness, currentValue: currentStats.cleanliness },
+  ];
+
+  let earliestCrossing: Date | null = null;
+
+  for (const stat of criticalStats) {
+    if (stat.currentValue > 0) continue; // hasn't crossed zero yet
+    const hoursToZero = stat.storedValue / stat.ratePerHour;
+    const crossingTime = new Date(decayStart.getTime() + hoursToZero * 60 * 60 * 1000);
+    if (earliestCrossing === null || crossingTime < earliestCrossing) {
+      earliestCrossing = crossingTime;
+    }
+  }
+
+  if (earliestCrossing === null) return false;
+
+  const hoursSinceCrossing = (now.getTime() - earliestCrossing.getTime()) / (60 * 60 * 1000);
+  return hoursSinceCrossing > SICK_THRESHOLD_HOURS;
+}

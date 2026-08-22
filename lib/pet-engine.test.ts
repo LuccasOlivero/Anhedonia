@@ -138,3 +138,64 @@ describe('computeCurrentStats', () => {
     expect(stats.hunger).toBe(0);
   });
 });
+
+import { computeIsSick } from './pet-engine';
+
+describe('computeIsSick', () => {
+  it('is never sick during the egg stage, even with zeroed stats', () => {
+    const createdAt = new Date(); // elapsed 0 days -> egg
+    const pet = makePet({
+      created_at: createdAt.toISOString(),
+      last_updated_at: createdAt.toISOString(),
+      hunger: 0,
+      cleanliness: 0,
+    });
+    expect(computeIsSick(pet, new Date())).toBe(false);
+  });
+
+  it('is not sick when hunger has not yet reached 0', () => {
+    const pet = makePet({
+      last_updated_at: new Date(Date.now() - 1 * HOUR).toISOString(),
+      hunger: 100,
+      cleanliness: 100,
+    });
+    expect(computeIsSick(pet, new Date())).toBe(false);
+  });
+
+  it('is not sick when hunger crossed 0 less than 24h ago', () => {
+    // hunger=100, rate=100/24 per hour -> crosses 0 exactly 24h after last_updated_at
+    const lastUpdatedAt = new Date(Date.now() - 30 * HOUR);
+    const pet = makePet({ last_updated_at: lastUpdatedAt.toISOString(), hunger: 100, cleanliness: 100 });
+    // crossing = lastUpdatedAt + 24h = now - 6h; only 6h since crossing
+    expect(computeIsSick(pet, new Date())).toBe(false);
+  });
+
+  it('is sick when hunger crossed 0 more than 24h ago', () => {
+    const lastUpdatedAt = new Date(Date.now() - 60 * HOUR);
+    const pet = makePet({ last_updated_at: lastUpdatedAt.toISOString(), hunger: 100, cleanliness: 100 });
+    // crossing = lastUpdatedAt + 24h = now - 36h; 36h since crossing > 24h threshold
+    expect(computeIsSick(pet, new Date())).toBe(true);
+  });
+
+  it('is sick when cleanliness has been at 0 well past the threshold', () => {
+    const lastUpdatedAt = new Date(Date.now() - 100 * HOUR);
+    const pet = makePet({
+      last_updated_at: lastUpdatedAt.toISOString(),
+      hunger: 100,
+      cleanliness: 100, // rate 100/30 per hour -> crosses 0 at 30h after last_updated_at
+    });
+    // cleanliness crossing = lastUpdatedAt + 30h = now - 70h; 70h since crossing > 24h
+    expect(computeIsSick(pet, new Date())).toBe(true);
+  });
+
+  it('uses the earliest crossing among critical stats', () => {
+    // hunger crosses 40h ago, cleanliness crosses 10h ago -> earliest is hunger's, 40h > 24h -> sick
+    const now = new Date();
+    const pet = makePet({
+      last_updated_at: new Date(now.getTime() - 64 * HOUR).toISOString(), // 100/24 -> crosses at +24h => 40h ago
+      hunger: 100,
+      cleanliness: 14 + (10 * (100 / 30)), // crosses 0 exactly 10h before now given this last_updated_at
+    });
+    expect(computeIsSick(pet, now)).toBe(true);
+  });
+});
