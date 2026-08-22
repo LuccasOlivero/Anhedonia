@@ -110,7 +110,37 @@ Add to `package.json` `"scripts"`:
 Run: `npx vitest run`
 Expected: exits reporting "No test files found" — this confirms the config loads without error. Real tests arrive in Task 3.
 
-- [ ] **Step 7: Add the env var template**
+- [ ] **Step 7: Set the app-wide visual design (font + background)**
+
+The visual direction for this app is inspired by "Pet Society" (the classic Facebook pet game): warm cream/amber backgrounds, white cards with thick rounded corners and soft shadows, candy-colored pill buttons, and a friendly rounded display font. This step sets the font and base background globally so every later page inherits it.
+
+Replace `app/layout.tsx`:
+```tsx
+import type { Metadata } from "next";
+import { Baloo_2 } from "next/font/google";
+import "./globals.css";
+
+const baloo = Baloo_2({ subsets: ["latin"], weight: ["400", "600", "700"] });
+
+export const metadata: Metadata = {
+  title: "Pets Forever",
+  description: "Your virtual pet, made from your real one.",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className={`${baloo.className} bg-amber-50 text-stone-800 min-h-screen antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+Run: `npm run dev`, open `http://localhost:3000` (still just the default create-next-app placeholder page at this point). Confirm the page background is cream-colored and text renders in the rounded Baloo 2 font, not the default system font.
+
+- [ ] **Step 8: Add the env var template**
 
 Create `.env.local.example`:
 ```
@@ -121,7 +151,7 @@ GEMINI_API_KEY=
 
 Confirm `.gitignore` already contains `.env*.local` (create-next-app adds this by default) so real secrets are never committed. If it's missing, add it.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 9: Commit**
 
 ```bash
 git add package.json package-lock.json app public tsconfig.json next.config.ts eslint.config.mjs .gitignore vitest.config.ts .env.local.example
@@ -1428,6 +1458,8 @@ export async function signOut() {
 
 - [ ] **Step 2: Build the login/signup form**
 
+Visual style for every page from here on: Pet Society-inspired — white cards with thick amber borders, rounded-3xl corners, soft shadows, pill-shaped inputs/buttons, candy accent colors. `app/layout.tsx` (Task 1 Step 7) already sets the cream background and rounded display font globally.
+
 Create `app/login/LoginForm.tsx`:
 ```tsx
 'use client';
@@ -1442,33 +1474,75 @@ export function LoginForm() {
   const [signUpState, signUpAction, signUpPending] = useActionState(signUp, initialState);
 
   return (
-    <div>
-      <form action={signInAction}>
-        <h2>Log in</h2>
-        <label>
-          Email
-          <input type="email" name="email" required />
+    <div className="w-full max-w-sm mx-auto space-y-6">
+      <form action={signInAction} className="space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg">
+        <h2 className="text-center text-2xl font-bold text-stone-700">Log in</h2>
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-stone-500">Email</span>
+          <input
+            type="email"
+            name="email"
+            required
+            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-pink-400 focus:outline-none"
+          />
         </label>
-        <label>
-          Password
-          <input type="password" name="password" required minLength={6} />
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-stone-500">Password</span>
+          <input
+            type="password"
+            name="password"
+            required
+            minLength={6}
+            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-pink-400 focus:outline-none"
+          />
         </label>
-        {signInState?.error && <p role="alert">{signInState.error}</p>}
-        <button type="submit" disabled={signInPending}>Log in</button>
+        {signInState?.error && (
+          <p role="alert" className="text-center text-sm font-semibold text-rose-500">
+            {signInState.error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={signInPending}
+          className="w-full rounded-full bg-pink-400 py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50"
+        >
+          Log in
+        </button>
       </form>
 
-      <form action={signUpAction}>
-        <h2>Sign up</h2>
-        <label>
-          Email
-          <input type="email" name="email" required />
+      <form action={signUpAction} className="space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg">
+        <h2 className="text-center text-2xl font-bold text-stone-700">Sign up</h2>
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-stone-500">Email</span>
+          <input
+            type="email"
+            name="email"
+            required
+            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-teal-400 focus:outline-none"
+          />
         </label>
-        <label>
-          Password
-          <input type="password" name="password" required minLength={6} />
+        <label className="block space-y-1">
+          <span className="text-sm font-semibold text-stone-500">Password</span>
+          <input
+            type="password"
+            name="password"
+            required
+            minLength={6}
+            className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-teal-400 focus:outline-none"
+          />
         </label>
-        {signUpState?.error && <p role="alert">{signUpState.error}</p>}
-        <button type="submit" disabled={signUpPending}>Sign up</button>
+        {signUpState?.error && (
+          <p role="alert" className="text-center text-sm font-semibold text-rose-500">
+            {signUpState.error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={signUpPending}
+          className="w-full rounded-full bg-teal-400 py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50"
+        >
+          Sign up
+        </button>
       </form>
     </div>
   );
@@ -1481,8 +1555,8 @@ import { LoginForm } from './LoginForm';
 
 export default function LoginPage() {
   return (
-    <main>
-      <h1>Pets Forever</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-sky-100 to-amber-50 px-4 py-12">
+      <h1 className="text-4xl font-bold text-stone-700">🐾 Pets Forever</h1>
       <LoginForm />
     </main>
   );
@@ -1722,25 +1796,56 @@ export function OnboardingForm() {
   }
 
   if (pending) {
-    return <p>Incubating your pet...</p>;
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-3xl border-4 border-amber-200 bg-white p-10 shadow-lg">
+        <span className="animate-bounce text-5xl">🥚</span>
+        <p className="text-lg font-bold text-stone-600">Incubating your pet...</p>
+      </div>
+    );
   }
 
   return (
-    <form action={formAction}>
-      <label>
-        Pet name
-        <input type="text" name="name" required />
+    <form
+      action={formAction}
+      className="mx-auto w-full max-w-sm space-y-4 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg"
+    >
+      <label className="block space-y-1">
+        <span className="text-sm font-semibold text-stone-500">Pet name</span>
+        <input
+          type="text"
+          name="name"
+          required
+          className="w-full rounded-full border-2 border-amber-200 px-4 py-2 focus:border-pink-400 focus:outline-none"
+        />
       </label>
-      <label>
-        Photos (1-3, image files, max 5MB each)
-        <input type="file" name="photos" accept="image/*" multiple required onChange={handleFilesChange} />
+      <label className="block space-y-1">
+        <span className="text-sm font-semibold text-stone-500">Photos (1-3, max 5MB each)</span>
+        <input
+          type="file"
+          name="photos"
+          accept="image/*"
+          multiple
+          required
+          onChange={handleFilesChange}
+          className="w-full rounded-2xl border-2 border-dashed border-amber-300 px-4 py-3 text-sm file:mr-3 file:rounded-full file:border-0 file:bg-amber-200 file:px-3 file:py-1 file:font-semibold"
+        />
       </label>
-      {previews.map((src) => (
-        <img key={src} src={src} alt="Pet preview" width={100} />
-      ))}
-      {clientError && <p role="alert">{clientError}</p>}
-      {state?.error && <p role="alert">{state.error}</p>}
-      <button type="submit" disabled={!!clientError}>Create my pet</button>
+      {previews.length > 0 && (
+        <div className="flex gap-2">
+          {previews.map((src) => (
+            <img key={src} src={src} alt="Pet preview" className="h-16 w-16 rounded-2xl border-2 border-amber-200 object-cover" />
+          ))}
+        </div>
+      )}
+      {clientError && <p role="alert" className="text-sm font-semibold text-rose-500">{clientError}</p>}
+      {state?.error && <p role="alert" className="text-sm font-semibold text-rose-500">{state.error}</p>}
+      <button
+        type="submit"
+        disabled={!!clientError}
+        className="w-full rounded-full bg-pink-400 py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50"
+      >
+        Create my pet
+      </button>
     </form>
   );
 }
@@ -1761,8 +1866,8 @@ export default async function OnboardingPage() {
   if (pet) redirect('/pet');
 
   return (
-    <main>
-      <h1>Welcome! Let&apos;s create your pet.</h1>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-sky-100 to-amber-50 px-4 py-12">
+      <h1 className="text-center text-3xl font-bold text-stone-700">Welcome! Let&apos;s create your pet.</h1>
       <OnboardingForm />
     </main>
   );
@@ -1799,18 +1904,31 @@ git commit -m "feat: add onboarding flow with photo upload and sprite generation
 
 Create `app/pet/StatBar.tsx`:
 ```tsx
+const STAT_ICONS: Record<string, string> = {
+  Hunger: '🍖',
+  Happiness: '😊',
+  Energy: '⚡',
+  Cleanliness: '✨',
+};
+
 function colorFor(value: number): string {
-  if (value >= 60) return 'green';
-  if (value >= 30) return 'orange';
-  return 'red';
+  if (value >= 60) return 'bg-emerald-400';
+  if (value >= 30) return 'bg-amber-400';
+  return 'bg-rose-400';
 }
 
 export function StatBar({ label, value }: { label: string; value: number }) {
   return (
-    <div>
-      <span>{label}: {Math.round(value)}</span>
-      <div style={{ background: '#eee', width: '100%', height: 12 }}>
-        <div style={{ width: `${value}%`, background: colorFor(value), height: '100%' }} />
+    <div className="flex items-center gap-3">
+      <span className="text-xl">{STAT_ICONS[label] ?? ''}</span>
+      <div className="flex-1">
+        <div className="mb-1 flex justify-between text-xs font-semibold text-stone-500">
+          <span>{label}</span>
+          <span>{Math.round(value)}%</span>
+        </div>
+        <div className="h-3 w-full overflow-hidden rounded-full bg-amber-100">
+          <div className={`h-full rounded-full transition-all ${colorFor(value)}`} style={{ width: `${value}%` }} />
+        </div>
       </div>
     </div>
   );
@@ -1848,26 +1966,34 @@ export default async function PetPage() {
   const mood = computeMood(stats, isSick, petRow.is_sleeping);
 
   return (
-    <main>
-      <h1>{petRow.name}</h1>
+    <main className="flex min-h-screen flex-col items-center gap-6 bg-gradient-to-b from-sky-100 to-green-100 px-4 py-10">
+      <div className="w-full max-w-sm space-y-6 rounded-3xl border-4 border-amber-200 bg-white p-6 shadow-lg">
+        <h1 className="text-center text-2xl font-bold text-stone-700">{petRow.name}</h1>
 
-      {lifeStage === 'egg' ? (
-        <div>
-          <img src="/egg-sprite.svg" alt="Egg" width={256} height={256} />
-          <p>Your pet is about to hatch.</p>
+        <div className="flex flex-col items-center">
+          <div className="-mb-4 h-6 w-40 rounded-full bg-green-200/60 blur-sm" />
+          {lifeStage === 'egg' ? (
+            <>
+              <img src="/egg-sprite.svg" alt="Egg" width={180} height={180} className="drop-shadow-lg" />
+              <p className="mt-2 text-sm font-semibold text-stone-500">Your pet is about to hatch.</p>
+            </>
+          ) : (
+            <img
+              src={petRow.sprites[mood]}
+              alt={petRow.name}
+              className="drop-shadow-lg"
+              style={{ width: lifeStage === 'baby' ? '55%' : '85%' }}
+            />
+          )}
         </div>
-      ) : (
-        <img
-          src={petRow.sprites[mood]}
-          alt={petRow.name}
-          style={{ width: lifeStage === 'baby' ? '60%' : '100%' }}
-        />
-      )}
 
-      <StatBar label="Hunger" value={stats.hunger} />
-      <StatBar label="Happiness" value={stats.happiness} />
-      <StatBar label="Energy" value={stats.energy} />
-      <StatBar label="Cleanliness" value={stats.cleanliness} />
+        <div className="space-y-3">
+          <StatBar label="Hunger" value={stats.hunger} />
+          <StatBar label="Happiness" value={stats.happiness} />
+          <StatBar label="Energy" value={stats.energy} />
+          <StatBar label="Cleanliness" value={stats.cleanliness} />
+        </div>
+      </div>
     </main>
   );
 }
@@ -2029,6 +2155,14 @@ Create `app/pet/ActionButtons.tsx`:
 import { useState, useTransition } from 'react';
 import { feed, play, bathe, toggleSleep, medicine } from './actions';
 
+const BUTTON_COLOR = {
+  feed: 'bg-orange-400',
+  play: 'bg-pink-400',
+  bathe: 'bg-teal-400',
+  sleep: 'bg-indigo-400',
+  medicine: 'bg-rose-500',
+};
+
 export function ActionButtons({ isSleeping, isSick }: { isSleeping: boolean; isSick: boolean }) {
   const [isPending, startTransition] = useTransition();
   const [showEating, setShowEating] = useState(false);
@@ -2053,18 +2187,31 @@ export function ActionButtons({ isSleeping, isSick }: { isSleeping: boolean; isS
     });
   }
 
+  const buttonClass = (color: string) =>
+    `rounded-full ${color} py-2 font-bold text-white shadow-md transition-transform active:scale-95 disabled:opacity-50`;
+
   return (
-    <div>
-      {showEating && <p>Eating...</p>}
-      {error && <p role="alert">{error}</p>}
-      <button onClick={handleFeed} disabled={isPending}>Feed</button>
-      <button onClick={() => runAction(play)} disabled={isPending || isSleeping}>Play</button>
-      <button onClick={() => runAction(bathe)} disabled={isPending}>Bathe</button>
-      <button onClick={() => runAction(toggleSleep)} disabled={isPending}>
-        {isSleeping ? 'Wake' : 'Sleep'}
-      </button>
+    <div className="space-y-3">
+      {showEating && <p className="text-center text-sm font-semibold text-stone-500">😋 Eating...</p>}
+      {error && <p role="alert" className="text-center text-sm font-semibold text-rose-500">{error}</p>}
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={handleFeed} disabled={isPending} className={buttonClass(BUTTON_COLOR.feed)}>
+          🍖 Feed
+        </button>
+        <button onClick={() => runAction(play)} disabled={isPending || isSleeping} className={buttonClass(BUTTON_COLOR.play)}>
+          🎮 Play
+        </button>
+        <button onClick={() => runAction(bathe)} disabled={isPending} className={buttonClass(BUTTON_COLOR.bathe)}>
+          🛁 Bathe
+        </button>
+        <button onClick={() => runAction(toggleSleep)} disabled={isPending} className={buttonClass(BUTTON_COLOR.sleep)}>
+          {isSleeping ? '☀️ Wake' : '💤 Sleep'}
+        </button>
+      </div>
       {isSick && (
-        <button onClick={() => runAction(medicine)} disabled={isPending}>Medicine</button>
+        <button onClick={() => runAction(medicine)} disabled={isPending} className={`w-full ${buttonClass(BUTTON_COLOR.medicine)}`}>
+          💊 Medicine
+        </button>
       )}
     </div>
   );
@@ -2073,14 +2220,14 @@ export function ActionButtons({ isSleeping, isSick }: { isSleeping: boolean; isS
 
 - [ ] **Step 3: Wire `ActionButtons` into the dashboard**
 
-Modify `app/pet/page.tsx`: add the import and render the buttons below the stat bars, only outside the egg stage.
+Modify `app/pet/page.tsx`: add the import and render the buttons below the stats block, only outside the egg stage.
 
 ```tsx
 import { ActionButtons } from './ActionButtons';
 ```
-and, after the four `<StatBar />` elements:
+and, right after the `<div className="space-y-3">...</div>` that wraps the four `<StatBar />` elements (still inside the outer card `<div>`):
 ```tsx
-      {lifeStage !== 'egg' && <ActionButtons isSleeping={petRow.is_sleeping} isSick={isSick} />}
+        {lifeStage !== 'egg' && <ActionButtons isSleeping={petRow.is_sleeping} isSick={isSick} />}
 ```
 
 - [ ] **Step 4: Manually verify each action against the real Supabase project**

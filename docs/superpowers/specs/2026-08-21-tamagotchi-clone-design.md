@@ -219,6 +219,18 @@ produces, since it isn't an idle/resting state.
 is implemented as its own isolated module (`lib/gemini-client.ts`) so it
 can be mocked in tests without hitting the real API.
 
+## Visual Style
+
+All styling uses **Tailwind CSS** utility classes (no separate CSS files beyond
+`globals.css`). The visual direction is inspired by "Pet Society" (the
+classic Facebook pet game): a warm cream/amber background, white cards with
+thick rounded corners and soft shadows, candy-colored pill-shaped buttons
+and inputs, and a friendly rounded display font (Baloo 2, via
+`next/font/google`), applied globally in the root layout. The stat bars
+keep the approved threshold-based coloring (green/amber/red by value) —
+that's a functional urgency signal, not just decoration — reskinned as
+rounded pill progress bars with a per-stat icon (🍖/😊/⚡/✨).
+
 ## Dashboard (`/pet`)
 
 - **Server Component**: loads the user's `pets` row (redirects to
