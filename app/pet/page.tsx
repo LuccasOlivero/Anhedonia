@@ -8,6 +8,7 @@ import {
   type PetRow,
 } from '@/lib/pet-engine';
 import { StatBar } from './StatBar';
+import { ActionButtons } from './ActionButtons';
 
 export default async function PetPage() {
   const supabase = await createClient();
@@ -52,6 +53,8 @@ export default async function PetPage() {
           <StatBar label="Energy" value={stats.energy} />
           <StatBar label="Cleanliness" value={stats.cleanliness} />
         </div>
+
+        {lifeStage !== 'egg' && <ActionButtons isSleeping={petRow.is_sleeping} isSick={isSick} />}
       </div>
     </main>
   );
