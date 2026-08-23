@@ -10,6 +10,7 @@ import {
   bathe as batheStats,
   medicine as medicineStats,
   type PetRow,
+  type Stats,
 } from '@/lib/pet-engine';
 
 async function loadPet(): Promise<{ error: string } | { pet: PetRow }> {
@@ -22,13 +23,23 @@ async function loadPet(): Promise<{ error: string } | { pet: PetRow }> {
   return { pet: pet as PetRow };
 }
 
+// pet-engine.ts computes fractional decay; the `pets` table stores stats as smallint.
+function roundStats(stats: Stats): Stats {
+  return {
+    hunger: Math.round(stats.hunger),
+    happiness: Math.round(stats.happiness),
+    energy: Math.round(stats.energy),
+    cleanliness: Math.round(stats.cleanliness),
+  };
+}
+
 export async function feed() {
   const loaded = await loadPet();
   if ('error' in loaded) return loaded;
 
   const supabase = await createClient();
   const now = new Date();
-  const newStats = feedStats(computeCurrentStats(loaded.pet, now));
+  const newStats = roundStats(feedStats(computeCurrentStats(loaded.pet, now)));
 
   const { error } = await supabase
     .from('pets')
@@ -51,7 +62,7 @@ export async function play() {
 
   const { error } = await supabase
     .from('pets')
-    .update({ ...result, last_updated_at: now.toISOString() })
+    .update({ ...roundStats(result), last_updated_at: now.toISOString() })
     .eq('id', loaded.pet.id);
 
   if (error) return { error: error.message };
@@ -65,7 +76,7 @@ export async function bathe() {
 
   const supabase = await createClient();
   const now = new Date();
-  const newStats = batheStats(computeCurrentStats(loaded.pet, now));
+  const newStats = roundStats(batheStats(computeCurrentStats(loaded.pet, now)));
 
   const { error } = await supabase
     .from('pets')
@@ -83,7 +94,7 @@ export async function toggleSleep() {
 
   const supabase = await createClient();
   const now = new Date();
-  const currentStats = computeCurrentStats(loaded.pet, now);
+  const currentStats = roundStats(computeCurrentStats(loaded.pet, now));
 
   const { error } = await supabase
     .from('pets')
@@ -108,7 +119,7 @@ export async function medicine() {
 
   const { error } = await supabase
     .from('pets')
-    .update({ ...result, last_updated_at: now.toISOString() })
+    .update({ ...roundStats(result), last_updated_at: now.toISOString() })
     .eq('id', loaded.pet.id);
 
   if (error) return { error: error.message };
