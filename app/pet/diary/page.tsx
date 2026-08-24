@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { syncDiaryEvents } from '@/lib/diary-sync';
 import { computeVirtualMilestones, mergeDiaryTimeline, type DiaryEntry, type VirtualDiaryEntry } from '@/lib/diary';
-import type { PetRow } from '@/lib/pet-engine';
+import { LIFE_STAGE_DAYS, type PetRow } from '@/lib/pet-engine';
 import { AddNoteForm } from './AddNoteForm';
+import { EntryTime } from './EntryTime';
 
 const cardClass =
   'rounded-[2rem] border-8 border-[#6B4226] ring-4 ring-inset ring-[#C89B6C] bg-[#FFF9EC] p-6 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.25)]';
@@ -29,13 +30,16 @@ function labelFor(petName: string, entry: AnyEntry): string {
 }
 
 function imageFor(petRow: PetRow, entry: AnyEntry): string {
+  const hatchedAtMs = new Date(petRow.created_at).getTime() + LIFE_STAGE_DAYS.egg * 24 * 60 * 60 * 1000;
+  const entryIsPreHatch = new Date(entry.occurred_at).getTime() < hatchedAtMs;
+
   switch (entry.entry_type) {
     case 'hatched':
       return '/egg-sprite.svg';
     case 'grew_up':
       return petRow.sprites.happy;
     default:
-      return petRow.sprites[entry.mood_snapshot];
+      return entryIsPreHatch ? '/egg-sprite.svg' : petRow.sprites[entry.mood_snapshot];
   }
 }
 
@@ -87,7 +91,7 @@ export default async function DiaryPage() {
           )}
           {timeline.map((item) => (
             <div
-              key={`${item.kind}-${item.entry.entry_type}-${item.entry.occurred_at}`}
+              key={item.kind === 'real' ? item.entry.id : `${item.kind}-${item.entry.entry_type}-${item.entry.occurred_at}`}
               className={`flex gap-3 ${cardClass}`}
             >
               <img
@@ -100,7 +104,7 @@ export default async function DiaryPage() {
                   {labelFor(petRow.name, item.entry)}
                 </p>
                 <p className="text-xs font-semibold text-[#8B5E3C]">
-                  {new Date(item.entry.occurred_at).toLocaleString()}
+                  <EntryTime iso={item.entry.occurred_at} />
                 </p>
                 {item.kind === 'real' && item.entry.entry_type === 'note' && item.entry.text && (
                   <p className="text-sm text-[#4A3222]">{item.entry.text}</p>

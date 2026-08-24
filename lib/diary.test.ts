@@ -138,6 +138,12 @@ describe('determineNewDiaryEvents', () => {
     ];
     expect(determineNewDiaryEvents(sickPet(), new Date(), existing)).toEqual([]);
   });
+
+  it('always snapshots mood as sick for a got_sick event, even if the pet is sleeping', () => {
+    const events = determineNewDiaryEvents(sickPet({ is_sleeping: true }), new Date(), []);
+    expect(events).toHaveLength(1);
+    expect(events[0].mood_snapshot).toBe('sick');
+  });
 });
 
 describe('mergeDiaryTimeline', () => {

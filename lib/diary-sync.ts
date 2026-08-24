@@ -4,6 +4,14 @@ import type { PetRow } from './pet-engine';
 
 // Soft background sync: inserts any newly-detected got_sick/recovered events
 // for this pet. Never throws — a failure here must not break page render.
+//
+// KNOWN LIMITATION: this is read-then-write with no transaction and no DB-level
+// uniqueness guard. Two concurrent renders (e.g. two tabs, a prefetch racing a
+// navigation) could both read the same existing-entries snapshot before either
+// insert lands, and both insert the same event, producing a duplicate row.
+// Repeated *sequential* visits are idempotent (verified); concurrent ones are not.
+// Deferred because a real fix needs a DB-level unique constraint/partial index or
+// an atomic Postgres-side check-and-insert, which is its own schema change.
 export async function syncDiaryEvents(pet: PetRow): Promise<void> {
   try {
     const supabase = await createClient();

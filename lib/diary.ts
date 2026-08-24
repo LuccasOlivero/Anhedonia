@@ -5,7 +5,6 @@ import {
   LIFE_STAGE_DAYS,
   type MoodState,
   type PetRow,
-  type SpriteState,
 } from './pet-engine';
 
 export type DiaryEntryType = 'got_sick' | 'recovered' | 'note';
@@ -16,7 +15,7 @@ export interface DiaryEntry {
   user_id: string;
   entry_type: DiaryEntryType;
   occurred_at: string;
-  mood_snapshot: SpriteState;
+  mood_snapshot: MoodState;
   text: string | null;
   created_at: string;
 }
@@ -61,6 +60,15 @@ function mostRecentSicknessEntry(entries: DiaryEntry[]): DiaryEntry | null {
   );
 }
 
+// KNOWN LIMITATION: occurred_at is stamped as the moment this function runs (a diary
+// page visit), not the actual moment the pet got sick/recovered. computeIsSick already
+// derives the true onset time internally (see its `earliestCrossing` calculation in
+// pet-engine.ts) but that value isn't currently surfaced here. This means got_sick/
+// recovered timestamps can be later than reality if the user doesn't visit the diary
+// right when the state change happens, and can sort inconsistently against accurately-
+// timestamped user notes in the same timeline. Deferred rather than fixed because it
+// requires exporting a new function from pet-engine.ts; revisit if this becomes visibly
+// wrong to users in practice.
 export function determineNewDiaryEvents(pet: PetRow, now: Date, existingEntries: DiaryEntry[]): NewDiaryEvent[] {
   const isSick = computeIsSick(pet, now);
   const stats = computeCurrentStats(pet, now);
@@ -69,7 +77,7 @@ export function determineNewDiaryEvents(pet: PetRow, now: Date, existingEntries:
   const hasOpenSicknessEpisode = mostRecent !== null && mostRecent.entry_type === 'got_sick';
 
   if (isSick && !hasOpenSicknessEpisode) {
-    return [{ entry_type: 'got_sick', mood_snapshot: mood, occurred_at: now.toISOString() }];
+    return [{ entry_type: 'got_sick', mood_snapshot: 'sick', occurred_at: now.toISOString() }];
   }
 
   if (!isSick && hasOpenSicknessEpisode) {
