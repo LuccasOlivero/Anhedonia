@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { syncMissionsAndDailyBonus } from '@/lib/missions-sync';
 import {
   computeCurrentStats,
   computeIsSick,
@@ -19,7 +20,13 @@ export default async function PetPage() {
   const { data: pet } = await supabase.from('pets').select('*').eq('user_id', user.id).maybeSingle();
   if (!pet) redirect('/onboarding');
 
-  const petRow = pet as PetRow;
+  // Runs before re-reading the pet row below so any daily bonus / mission
+  // payout from this visit shows up in the coin balance rendered on this page.
+  await syncMissionsAndDailyBonus(pet as PetRow);
+
+  const { data: freshPet } = await supabase.from('pets').select('*').eq('user_id', user.id).maybeSingle();
+  const petRow = (freshPet ?? pet) as PetRow;
+
   const now = new Date();
   const stats = computeCurrentStats(petRow, now);
   const isSick = computeIsSick(petRow, now);
@@ -31,12 +38,23 @@ export default async function PetPage() {
       <div className="w-full max-w-sm space-y-6 rounded-[2rem] border-8 border-[#6B4226] ring-4 ring-inset ring-[#C89B6C] bg-[#FFF9EC] p-6 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">{petRow.name}</h1>
-          <Link
-            href="/pet/diary"
-            className="rounded-full bg-[#F0DEB4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20"
-          >
-            📔 Diario
-          </Link>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-[#FFF3C4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20">
+              🪙 {petRow.coins}
+            </span>
+            <Link
+              href="/pet/misiones"
+              className="rounded-full bg-[#F0DEB4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20"
+            >
+              🎯 Misiones
+            </Link>
+            <Link
+              href="/pet/diary"
+              className="rounded-full bg-[#F0DEB4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20"
+            >
+              📔 Diario
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-col items-center">
