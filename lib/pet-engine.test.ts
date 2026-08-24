@@ -23,6 +23,8 @@ function makePet(overrides: Partial<PetRow> = {}): PetRow {
     cleanliness: 100,
     is_sleeping: false,
     sprites: {} as PetRow['sprites'],
+    coins: 0,
+    last_daily_bonus_at: null,
     ...overrides,
   };
 }

@@ -114,3 +114,44 @@ create policy "Users read their own diary entries"
 create policy "Users insert their own diary entries"
   on diary_entries for insert
   with check (auth.uid() = user_id);
+
+-- --- Currency & Missions: coins, mission events, mission completions (added 2026-08-24) ---
+-- The `pets` and `diary_entries` tables above are already live in the Supabase project.
+-- Run ONLY the block below (SQL Editor > New query > Run) — do not re-run the whole file.
+-- `add column if not exists` / `create table if not exists` make this safe to run
+-- even if it was partially applied already.
+
+alter table pets add column if not exists coins integer not null default 0;
+alter table pets add column if not exists last_daily_bonus_at timestamptz;
+
+create table if not exists mission_events (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references pets(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  event_type text not null check (event_type in ('fed', 'bathed_dirty', 'played', 'medicated')),
+  occurred_at timestamptz not null default now()
+);
+
+alter table mission_events enable row level security;
+
+create policy "Users manage their own mission events"
+  on mission_events for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create table if not exists mission_completions (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references pets(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  mission_id text not null,
+  period_key text not null,
+  completed_at timestamptz not null default now(),
+  unique (pet_id, mission_id, period_key)
+);
+
+alter table mission_completions enable row level security;
+
+create policy "Users manage their own mission completions"
+  on mission_completions for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);

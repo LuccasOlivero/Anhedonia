@@ -20,6 +20,8 @@ export interface PetRow {
   cleanliness: number;
   is_sleeping: boolean;
   sprites: Record<SpriteState, string>;
+  coins: number;
+  last_daily_bonus_at: string | null;
 }
 
 export const DECAY_PER_HOUR = {
