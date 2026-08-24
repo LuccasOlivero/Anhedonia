@@ -190,3 +190,69 @@ create policy "Users insert their own mission completions"
 -- auto-index foreign keys, so without this every lookup was a seq scan.
 create index if not exists mission_events_pet_id_idx
   on mission_events (pet_id);
+
+-- --- Casa & Tienda: owned items, placed items (added 2026-08-24) ---
+-- Run ONLY the block below (SQL Editor > New query > Run) — do not re-run
+-- the whole file. `create table if not exists` makes this safe to run even
+-- if it was partially applied already.
+--
+-- Note on RLS: unlike the initial versions of diary_entries/mission_events/
+-- mission_completions (each later had to be hardened from `for all` down to
+-- narrower per-operation policies in a follow-up migration), these two
+-- tables ship with the correct narrow policies from the start. The app
+-- only ever inserts and selects on owned_items, and inserts/selects/deletes
+-- on placed_items — neither table is ever updated in place.
+
+create table if not exists owned_items (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references pets(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  item_id text not null,
+  acquired_at timestamptz not null default now(),
+  unique (pet_id, item_id)
+);
+
+alter table owned_items enable row level security;
+
+create policy "Users read their own owned items"
+  on owned_items for select
+  using (auth.uid() = user_id);
+
+create policy "Users insert their own owned items"
+  on owned_items for insert
+  with check (auth.uid() = user_id);
+
+create table if not exists placed_items (
+  id uuid primary key default gen_random_uuid(),
+  pet_id uuid not null references pets(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  item_id text not null,
+  position_x_pct numeric not null,
+  placed_at timestamptz not null default now()
+);
+
+alter table placed_items enable row level security;
+
+create policy "Users read their own placed items"
+  on placed_items for select
+  using (auth.uid() = user_id);
+
+create policy "Users insert their own placed items"
+  on placed_items for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users delete their own placed items"
+  on placed_items for delete
+  using (auth.uid() = user_id);
+
+-- Query pattern this indexes: `select * from owned_items where pet_id = ...`
+-- / `select * from placed_items where pet_id = ...` (lib/room-sync.ts,
+-- app/pet/casa/page.tsx, app/pet/casa/tienda/page.tsx). Postgres does not
+-- auto-index foreign keys — added up front this time instead of as a
+-- follow-up hardening task, per the lesson already learned from
+-- mission_events.
+create index if not exists owned_items_pet_id_idx
+  on owned_items (pet_id);
+
+create index if not exists placed_items_pet_id_idx
+  on placed_items (pet_id);
