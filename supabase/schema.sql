@@ -1,5 +1,8 @@
--- Run this entire file in the Supabase Dashboard: SQL Editor > New query > Run.
--- Prerequisite: create two Storage buckets first (Dashboard > Storage > New bucket):
+-- First-time setup: run this entire file in the Supabase Dashboard (SQL Editor > New query > Run).
+-- Existing project: each dated section below is a standalone increment — run only the
+-- sections you haven't applied yet, not the whole file again.
+-- Prerequisite (first-time setup only): create two Storage buckets first
+-- (Dashboard > Storage > New bucket):
 --   pet-photos   (leave "Public bucket" OFF)
 --   pet-sprites  (turn "Public bucket" ON)
 
@@ -70,4 +73,44 @@ alter table diary_entries enable row level security;
 create policy "Users manage their own diary entries"
   on diary_entries for all
   using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- --- Diary hardening: deferred findings from final review (added 2026-08-24) ---
+-- Run ONLY the block below — do not re-run the whole file. Safe to run once;
+-- the ADD CONSTRAINT statements are not wrapped in IF NOT EXISTS (Postgres
+-- doesn't support that for check constraints), so re-running this exact block
+-- a second time will error on "constraint already exists" rather than no-op.
+
+-- Query pattern this indexes: `select * from diary_entries where pet_id = ...
+-- order by occurred_at desc` (app/pet/diary/page.tsx).
+create index if not exists diary_entries_pet_id_occurred_at_idx
+  on diary_entries (pet_id, occurred_at desc);
+
+-- Constrains mood_snapshot to the actual MoodState values (lib/pet-engine.ts) —
+-- excludes 'eating', which is never stored as a mood snapshot. Without this,
+-- a bad value would flow through to `petRow.sprites[entry.mood_snapshot]` in
+-- app/pet/diary/page.tsx and render a broken image.
+alter table diary_entries
+  add constraint diary_entries_mood_snapshot_check
+  check (mood_snapshot in ('happy', 'sad', 'dirty', 'sick', 'sleeping'));
+
+-- Backstops the 280-character cap already enforced client-side (AddNoteForm's
+-- maxLength) and server-side (addDiaryNote) — closes the gap where a request
+-- sent directly to the API (bypassing the app's UI and Server Action) could
+-- otherwise store an arbitrarily large note.
+alter table diary_entries
+  add constraint diary_entries_text_length_check
+  check (text is null or char_length(text) <= 280);
+
+-- Replaces the "for all" policy above (which granted UPDATE/DELETE) with
+-- select/insert-only policies. The diary spec's stated intent is write-once
+-- notes; the "for all" policy never actually enforced that.
+drop policy if exists "Users manage their own diary entries" on diary_entries;
+
+create policy "Users read their own diary entries"
+  on diary_entries for select
+  using (auth.uid() = user_id);
+
+create policy "Users insert their own diary entries"
+  on diary_entries for insert
   with check (auth.uid() = user_id);
