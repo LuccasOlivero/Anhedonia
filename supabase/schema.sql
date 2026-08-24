@@ -155,3 +155,38 @@ create policy "Users manage their own mission completions"
   on mission_completions for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- --- Currency & Missions hardening: deferred findings from final review (added 2026-08-24) ---
+-- Run ONLY the block below — do not re-run the whole file. Safe to run once;
+-- the `drop policy if exists` / `create index if not exists` statements no-op
+-- on a second run, but the `create policy` statements will error on "policy
+-- already exists" if this exact block is re-run a second time.
+
+-- Replaces the "for all" policies above (which granted UPDATE/DELETE) with
+-- select/insert-only policies. The app only ever inserts mission events and
+-- completions and reads them back — it never updates or deletes either.
+drop policy if exists "Users manage their own mission events" on mission_events;
+
+create policy "Users read their own mission events"
+  on mission_events for select
+  using (auth.uid() = user_id);
+
+create policy "Users insert their own mission events"
+  on mission_events for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage their own mission completions" on mission_completions;
+
+create policy "Users read their own mission completions"
+  on mission_completions for select
+  using (auth.uid() = user_id);
+
+create policy "Users insert their own mission completions"
+  on mission_completions for insert
+  with check (auth.uid() = user_id);
+
+-- Query pattern this indexes: `select * from mission_events where pet_id = ...`
+-- (lib/missions-sync.ts, app/pet/misiones/page.tsx). Postgres does not
+-- auto-index foreign keys, so without this every lookup was a seq scan.
+create index if not exists mission_events_pet_id_idx
+  on mission_events (pet_id);
