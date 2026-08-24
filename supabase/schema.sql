@@ -256,3 +256,11 @@ create index if not exists owned_items_pet_id_idx
 
 create index if not exists placed_items_pet_id_idx
   on placed_items (pet_id);
+
+-- Constrains position_x_pct to the valid placement band [0, 100]. Backstops
+-- the 0–100 range validation already enforced client-side and in Server
+-- Actions (later tasks) — closes the gap where a request sent directly to the
+-- API could otherwise store an invalid position value.
+alter table placed_items
+  add constraint placed_items_position_x_pct_check
+  check (position_x_pct >= 0 and position_x_pct <= 100);
