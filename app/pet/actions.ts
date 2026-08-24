@@ -12,6 +12,7 @@ import {
   type PetRow,
   type Stats,
 } from '@/lib/pet-engine';
+import { COINS_PER_CARE_ACTION, type MissionEventType } from '@/lib/missions';
 
 async function loadPet(): Promise<{ error: string } | { pet: PetRow }> {
   const supabase = await createClient();
@@ -33,6 +34,45 @@ function roundStats(stats: Stats): Stats {
   };
 }
 
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+// Best-effort coin/mission-event awarding, called only after the care action's
+// primary stat update has already succeeded. Never throws — a failure here
+// must not turn a successful care action into an error shown to the user.
+//
+// KNOWN LIMITATION: `coins: pet.coins + COINS_PER_CARE_ACTION` is a
+// read-modify-write with no transaction, the same character as
+// lib/diary-sync.ts's already-documented concurrent-render risk. Not fixed
+// here for the same reason (would need a DB-level atomic increment/RPC).
+async function awardCareActionCoins(
+  supabase: SupabaseServerClient,
+  pet: PetRow,
+  eventType: MissionEventType | null
+): Promise<void> {
+  try {
+    if (eventType) {
+      const { error: eventError } = await supabase.from('mission_events').insert({
+        pet_id: pet.id,
+        user_id: pet.user_id,
+        event_type: eventType,
+      });
+      if (eventError) {
+        console.error('awardCareActionCoins: failed to log mission event', eventError);
+      }
+    }
+
+    const { error: coinsError } = await supabase
+      .from('pets')
+      .update({ coins: pet.coins + COINS_PER_CARE_ACTION })
+      .eq('id', pet.id);
+    if (coinsError) {
+      console.error('awardCareActionCoins: failed to award coins', coinsError);
+    }
+  } catch (err) {
+    console.error('awardCareActionCoins: unexpected error awarding coins', err);
+  }
+}
+
 export async function feed() {
   const loaded = await loadPet();
   if ('error' in loaded) return loaded;
@@ -47,6 +87,9 @@ export async function feed() {
     .eq('id', loaded.pet.id);
 
   if (error) return { error: error.message };
+
+  await awardCareActionCoins(supabase, loaded.pet, 'fed');
+
   revalidatePath('/pet');
   return { error: null };
 }
@@ -66,6 +109,9 @@ export async function play() {
     .eq('id', loaded.pet.id);
 
   if (error) return { error: error.message };
+
+  await awardCareActionCoins(supabase, loaded.pet, 'played');
+
   revalidatePath('/pet');
   return { error: null };
 }
@@ -76,7 +122,8 @@ export async function bathe() {
 
   const supabase = await createClient();
   const now = new Date();
-  const newStats = roundStats(batheStats(computeCurrentStats(loaded.pet, now)));
+  const statsBeforeBathe = computeCurrentStats(loaded.pet, now);
+  const newStats = roundStats(batheStats(statsBeforeBathe));
 
   const { error } = await supabase
     .from('pets')
@@ -84,6 +131,14 @@ export async function bathe() {
     .eq('id', loaded.pet.id);
 
   if (error) return { error: error.message };
+
+  // 30 matches computeMood's dirty cutoff (`stats.cleanliness < 30`) in
+  // lib/pet-engine.ts. bathed_dirty only counts as a real cleaning, not
+  // routine maintenance of an already-clean pet — see the spec's Data Model
+  // section. Coins are still awarded either way.
+  const wasDirty = statsBeforeBathe.cleanliness < 30;
+  await awardCareActionCoins(supabase, loaded.pet, wasDirty ? 'bathed_dirty' : null);
+
   revalidatePath('/pet');
   return { error: null };
 }
@@ -123,6 +178,9 @@ export async function medicine() {
     .eq('id', loaded.pet.id);
 
   if (error) return { error: error.message };
+
+  await awardCareActionCoins(supabase, loaded.pet, 'medicated');
+
   revalidatePath('/pet');
   return { error: null };
 }
