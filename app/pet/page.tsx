@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { syncMissionsAndDailyBonus } from '@/lib/missions-sync';
+import { syncBondScore } from '@/lib/bond-sync';
+import { computeBondTier } from '@/lib/bond';
 import {
   computeCurrentStats,
   computeIsSick,
@@ -11,6 +13,8 @@ import {
 } from '@/lib/pet-engine';
 import { StatBar } from './StatBar';
 import { ActionButtons } from './ActionButtons';
+import { BondScore } from './BondScore';
+import { WelcomeBackMessage } from './WelcomeBackMessage';
 
 export default async function PetPage() {
   const supabase = await createClient();
@@ -20,9 +24,10 @@ export default async function PetPage() {
   const { data: pet } = await supabase.from('pets').select('*').eq('user_id', user.id).maybeSingle();
   if (!pet) redirect('/onboarding');
 
-  // Runs before re-reading the pet row below so any daily bonus / mission
-  // payout from this visit shows up in the coin balance rendered on this page.
+  // Both syncs run before re-reading the pet row below so this visit's daily
+  // bonus, mission payout, and bond score update all show up immediately.
   await syncMissionsAndDailyBonus(pet as PetRow);
+  await syncBondScore(pet as PetRow);
 
   const { data: freshPet } = await supabase.from('pets').select('*').eq('user_id', user.id).maybeSingle();
   const petRow = (freshPet ?? pet) as PetRow;
@@ -32,6 +37,7 @@ export default async function PetPage() {
   const isSick = computeIsSick(petRow, now);
   const lifeStage = computeLifeStage(new Date(petRow.created_at), now);
   const mood = computeMood(stats, isSick, petRow.is_sleeping);
+  const bondTier = computeBondTier(petRow.bond_score);
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-6 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-10">
@@ -63,6 +69,8 @@ export default async function PetPage() {
           </div>
         </div>
 
+        <WelcomeBackMessage message={bondTier.message} />
+
         <div className="flex flex-col items-center">
           <div className="-mb-4 h-6 w-40 rounded-full bg-[#8FBF6A]/50 blur-sm" />
           {lifeStage === 'egg' ? (
@@ -86,6 +94,8 @@ export default async function PetPage() {
           <StatBar label="Energy" value={stats.energy} />
           <StatBar label="Cleanliness" value={stats.cleanliness} />
         </div>
+
+        <BondScore score={petRow.bond_score} tierLabel={bondTier.label} />
 
         {lifeStage !== 'egg' && <ActionButtons isSleeping={petRow.is_sleeping} isSick={isSick} />}
       </div>
