@@ -1,10 +1,11 @@
 export function CatSprite({ facing, walking }: { facing: 'left' | 'right'; walking: boolean }) {
   return (
-    <div
-      className={`relative h-16 w-16 ${walking ? 'animate-[cat-bob_0.3s_ease-in-out_infinite]' : ''}`}
-      style={{ transform: facing === 'left' ? 'scaleX(-1)' : undefined }}
-    >
-      <svg viewBox="0 0 64 64" className="h-full w-full drop-shadow-md">
+    <div className={`relative h-16 w-16 ${walking ? 'animate-[cat-bob_0.3s_ease-in-out_infinite]' : ''}`}>
+      <svg
+        viewBox="0 0 64 64"
+        className="h-full w-full drop-shadow-md"
+        style={{ transform: facing === 'left' ? 'scaleX(-1)' : undefined }}
+      >
         {/* body */}
         <ellipse cx="32" cy="42" rx="18" ry="14" fill="#F4A651" />
         {/* head */}

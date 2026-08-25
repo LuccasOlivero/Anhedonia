@@ -59,7 +59,7 @@ export function Room({
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-dvh w-full overflow-hidden">
       <div className="absolute inset-x-0 top-0" style={{ height: `${WALL_HEIGHT_PCT}%`, background: '#FDE9C8' }} />
       <div
         className="absolute inset-x-0 bottom-0 border-t-4 border-[#6B4226]"

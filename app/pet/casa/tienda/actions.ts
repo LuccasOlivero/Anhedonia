@@ -45,12 +45,21 @@ export async function buyItem(itemId: string): Promise<{ error: string | null }>
   const currentCoins = freshPet?.coins ?? loaded.pet.coins;
   if (currentCoins < item.priceCoins) return { error: 'Not enough coins.' };
 
-  const { error: coinsError } = await supabase
+  // Optimistic concurrency: only deduct if the balance still matches what we
+  // just read. If another request already spent these coins (e.g. a
+  // concurrent double-buy), this update affects zero rows instead of
+  // silently deducting from a balance we didn't actually observe.
+  const { data: updated, error: coinsError } = await supabase
     .from('pets')
     .update({ coins: currentCoins - item.priceCoins })
-    .eq('id', loaded.pet.id);
+    .eq('id', loaded.pet.id)
+    .eq('coins', currentCoins)
+    .select('coins');
 
   if (coinsError) return { error: coinsError.message };
+  if (!updated || updated.length === 0) {
+    return { error: 'Balance changed, please try again.' };
+  }
 
   const { error: insertError } = await supabase.from('owned_items').insert({
     pet_id: loaded.pet.id,
@@ -58,9 +67,21 @@ export async function buyItem(itemId: string): Promise<{ error: string | null }>
     item_id: itemId,
   });
 
-  if (insertError) return { error: insertError.message };
+  if (insertError) {
+    console.error(
+      'buyItem: coins deducted but ownership grant failed, attempting to restore balance',
+      insertError
+    );
+    // Best-effort compensation: restore the coins we just deducted. This is
+    // itself a non-transactional read-modify-write and could theoretically
+    // race again, but it converts the common case (insert fails once, no
+    // further contention) from a silent coin loss into a correct outcome.
+    await supabase.from('pets').update({ coins: currentCoins }).eq('id', loaded.pet.id);
+    return { error: 'Purchase failed, your coins were not spent.' };
+  }
 
   revalidatePath('/pet/casa/tienda');
   revalidatePath('/pet/casa');
+  revalidatePath('/pet');
   return { error: null };
 }
