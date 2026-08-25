@@ -43,6 +43,12 @@ export default async function PetPage() {
               🪙 {petRow.coins}
             </span>
             <Link
+              href="/pet/casa"
+              className="rounded-full bg-[#F0DEB4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20"
+            >
+              🏠 Casa
+            </Link>
+            <Link
               href="/pet/misiones"
               className="rounded-full bg-[#F0DEB4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20"
             >
