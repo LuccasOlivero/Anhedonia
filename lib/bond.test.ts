@@ -151,4 +151,20 @@ describe('computeNextBondState', () => {
     );
     expect(state).toEqual({ bondScore: 9, streakDays: 3, lastSyncDate: '2026-08-23' });
   });
+
+  it('continues decaying across separate sync calls for the same ongoing absence (regression: previousDayWasCaredFor must not reset to a free grace day on every visit)', () => {
+    // Call 1: an existing streak hits its first missed day. The grace period
+    // applies within this call, so the score is untouched but the streak
+    // resets to 0.
+    let state: BondState = { bondScore: 10, streakDays: 2, lastSyncDate: '2026-08-19' };
+    state = computeNextBondState(state, new Set(), new Date('2026-08-20T09:00:00.000Z'));
+    expect(state).toEqual({ bondScore: 10, streakDays: 0, lastSyncDate: '2026-08-20' });
+
+    // Call 2: a separate, later call whose single evaluated day is the very
+    // next day of the SAME real-world absence. Because streakDays is 0 going
+    // in, previousDayWasCaredFor must initialize to false (not grant a fresh
+    // free grace day), so this decays.
+    state = computeNextBondState(state, new Set(), new Date('2026-08-21T09:00:00.000Z'));
+    expect(state).toEqual({ bondScore: 9, streakDays: 0, lastSyncDate: '2026-08-21' });
+  });
 });
