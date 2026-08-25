@@ -25,6 +25,9 @@ function makePet(overrides: Partial<PetRow> = {}): PetRow {
     sprites: {} as PetRow['sprites'],
     coins: 0,
     last_daily_bonus_at: null,
+    bond_score: 0,
+    bond_streak_days: 0,
+    last_bond_sync_date: null,
     ...overrides,
   };
 }

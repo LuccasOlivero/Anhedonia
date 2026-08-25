@@ -264,3 +264,12 @@ create index if not exists placed_items_pet_id_idx
 alter table placed_items
   add constraint placed_items_position_x_pct_check
   check (position_x_pct >= 0 and position_x_pct <= 100);
+
+-- --- Bond Score: trust/attachment score derived from daily care streaks (added 2026-08-25) ---
+-- Every table/column above this point is already live in the Supabase project.
+-- Run ONLY the block below (SQL Editor > New query > Run) — do not re-run the whole file.
+-- `add column if not exists` makes this safe to run even if it was partially applied already.
+
+alter table pets add column if not exists bond_score smallint not null default 0;
+alter table pets add column if not exists bond_streak_days smallint not null default 0;
+alter table pets add column if not exists last_bond_sync_date date;

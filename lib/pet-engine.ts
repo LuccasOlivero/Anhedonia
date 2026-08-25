@@ -22,6 +22,9 @@ export interface PetRow {
   sprites: Record<SpriteState, string>;
   coins: number;
   last_daily_bonus_at: string | null;
+  bond_score: number;
+  bond_streak_days: number;
+  last_bond_sync_date: string | null;
 }
 
 export const DECAY_PER_HOUR = {
