@@ -44,21 +44,9 @@ describe('clamp', () => {
 });
 
 describe('computeLifeStage', () => {
-  it('is egg for 0 elapsed days', () => {
+  it('is baby immediately at creation — there is no post-creation egg wait', () => {
     const createdAt = new Date('2026-01-01T00:00:00Z');
-    expect(computeLifeStage(createdAt, createdAt)).toBe('egg');
-  });
-
-  it('is egg just under the egg boundary', () => {
-    const createdAt = new Date('2026-01-01T00:00:00Z');
-    const now = new Date(createdAt.getTime() + (LIFE_STAGE_DAYS.egg * DAY - HOUR));
-    expect(computeLifeStage(createdAt, now)).toBe('egg');
-  });
-
-  it('is baby exactly at the egg boundary', () => {
-    const createdAt = new Date('2026-01-01T00:00:00Z');
-    const now = new Date(createdAt.getTime() + LIFE_STAGE_DAYS.egg * DAY);
-    expect(computeLifeStage(createdAt, now)).toBe('baby');
+    expect(computeLifeStage(createdAt, createdAt)).toBe('baby');
   });
 
   it('is adult exactly at the baby boundary', () => {
@@ -117,44 +105,11 @@ describe('computeCurrentStats', () => {
     expect(stats.energy).toBe(100);
   });
 
-  it('does not decay stats before the egg has hatched', () => {
-    const createdAt = new Date(Date.now() - 1 * DAY); // still egg: elapsed 1 day < 2
-    const pet = makePet({
-      created_at: createdAt.toISOString(),
-      last_updated_at: createdAt.toISOString(),
-      hunger: 100,
-    });
-    const stats = computeCurrentStats(pet, new Date());
-    expect(stats.hunger).toBe(100);
-  });
-
-  it('starts decay at hatch time, not at last_updated_at, when last_updated_at predates hatching', () => {
-    const createdAt = new Date(Date.now() - 3 * DAY); // hatched 1 day ago (egg = 2 days)
-    const pet = makePet({
-      created_at: createdAt.toISOString(),
-      last_updated_at: createdAt.toISOString(), // 3 days ago, before hatch
-      hunger: 100,
-    });
-    // hatch was 1 day (24h) ago; hunger decays 100/24 per hour -> fully decayed to 0
-    const stats = computeCurrentStats(pet, new Date());
-    expect(stats.hunger).toBe(0);
-  });
 });
 
 import { computeIsSick } from './pet-engine';
 
 describe('computeIsSick', () => {
-  it('is never sick during the egg stage, even with zeroed stats', () => {
-    const createdAt = new Date(); // elapsed 0 days -> egg
-    const pet = makePet({
-      created_at: createdAt.toISOString(),
-      last_updated_at: createdAt.toISOString(),
-      hunger: 0,
-      cleanliness: 0,
-    });
-    expect(computeIsSick(pet, new Date())).toBe(false);
-  });
-
   it('is not sick when hunger has not yet reached 0', () => {
     const pet = makePet({
       last_updated_at: new Date(Date.now() - 1 * HOUR).toISOString(),

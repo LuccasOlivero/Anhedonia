@@ -39,9 +39,12 @@ function makeDiaryEntry(overrides: Partial<DiaryEntry> = {}): DiaryEntry {
 }
 
 describe('computeVirtualMilestones', () => {
-  it('returns no milestones while still an egg', () => {
-    const pet = makePet({ created_at: new Date().toISOString() });
-    expect(computeVirtualMilestones(pet, new Date())).toEqual([]);
+  it('includes "hatched" immediately at creation — there is no post-creation egg wait', () => {
+    const createdAt = new Date();
+    const pet = makePet({ created_at: createdAt.toISOString() });
+    const milestones = computeVirtualMilestones(pet, createdAt);
+    expect(milestones).toHaveLength(1);
+    expect(milestones[0].entry_type).toBe('hatched');
   });
 
   it('returns only "hatched" after the egg boundary but before the baby boundary', () => {

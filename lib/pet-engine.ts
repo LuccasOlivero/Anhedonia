@@ -33,7 +33,11 @@ export const DECAY_PER_HOUR = {
 
 export const ENERGY_REGEN_PER_HOUR_SLEEPING = 100 / 8;
 export const SICK_THRESHOLD_HOURS = 24;
-export const LIFE_STAGE_DAYS = { egg: 2, baby: 5 } as const;
+// egg: 0 — the real "incubation" wait is the Gemini sprite generation during
+// onboarding (a few seconds, already shown as its own loading state there);
+// there is no additional post-creation egg period. A pet is 'baby' the
+// instant it's created.
+export const LIFE_STAGE_DAYS = { egg: 0, baby: 5 } as const;
 
 export function clamp(n: number): number {
   return Math.min(100, Math.max(0, n));
