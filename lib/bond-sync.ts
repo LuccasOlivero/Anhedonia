@@ -23,16 +23,19 @@ import type { PetRow } from './pet-engine';
 // in the result are harmless, unused input.
 //
 // KNOWN LIMITATION: the read-then-write here (read pet.bond_score/
-// bond_streak_days/last_bond_sync_date, compute the next state, then write
-// it back) has no transaction. Two concurrent first-loads-of-the-day for the
-// same pet, landing within the same narrow window, could both read the same
-// pre-sync snapshot and both write — the later-landing write would move
-// last_bond_sync_date backwards relative to the earlier one, causing one
-// calendar day to be re-evaluated on a later sync (a duplicate +3 growth or
-// -1 decay for that one day). This requires two genuinely simultaneous
-// requests within roughly a one-second window, once per day, making it less
-// reachable than the coins-award race this same codebase already accepts as
-// a known, accepted limitation in lib/missions-sync.ts.
+// bond_streak_days/last_bond_sync_date, read mission_events, compute the
+// next state, then write it back) has no transaction. Two concurrent syncs
+// for the same pet both read mission_events via select('*') before either
+// writes back to pets. If a care action's mission_events row is inserted by
+// a third concurrent request in between those two reads, the sync that read
+// the stale (pre-insert) snapshot could still win the final pets write —
+// overwriting the other sync's result and silently dropping that day's
+// growth from the persisted bond_score/bond_streak_days. This is the same
+// "one query can miss a concurrently-written row" pattern already
+// documented and accepted for the coins award in lib/missions-sync.ts. It
+// requires genuinely simultaneous requests within a narrow window and is an
+// accepted, low-likelihood limitation, consistent with this codebase's
+// existing tolerance for that coins race.
 export async function syncBondScore(pet: PetRow): Promise<void> {
   try {
     const now = new Date();
