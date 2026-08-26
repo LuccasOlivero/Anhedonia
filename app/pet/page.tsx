@@ -66,6 +66,12 @@ export default async function PetPage() {
             >
               📔 Diario
             </Link>
+            <Link
+              href="/pet/notificaciones"
+              className="rounded-full bg-[#F0DEB4] px-3 py-1 text-sm font-semibold text-[#8B5E3C] ring-1 ring-inset ring-[#6B4226]/20"
+            >
+              ✉️ Notificaciones
+            </Link>
           </div>
         </div>
 
