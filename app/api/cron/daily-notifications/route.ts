@@ -5,6 +5,14 @@ import { shouldSendDailyBonusEmail, type NotificationPreferences } from '@/lib/n
 import { computePeriodKey } from '@/lib/missions';
 import type { PetRow } from '@/lib/pet-engine';
 
+// Each eligible user costs ~3 sequential round-trips (email lookup, Resend
+// send, status update), roughly 0.5-1s each. Without an explicit maxDuration,
+// this route runs at Vercel's default function timeout and could be killed
+// mid-batch as the number of opted-in users grows, silently dropping the
+// remaining users for that day (no intra-day retry exists — the cron only
+// fires once daily).
+export const maxDuration = 60;
+
 interface NotificationPreferenceRow {
   user_id: string;
   last_daily_bonus_email_sent_date: string | null;
@@ -12,8 +20,17 @@ interface NotificationPreferenceRow {
 
 const SUBJECT = '🎁 Tu bono diario te espera';
 
+function resolveAppUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.NODE_ENV === 'production') {
+    console.error('daily-notifications cron: no NEXT_PUBLIC_APP_URL or VERCEL_URL set in production — email links will point at localhost');
+  }
+  return 'http://localhost:3000';
+}
+
 function buildEmailHtml(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const appUrl = resolveAppUrl();
   return `<div style="font-family: sans-serif; font-size: 16px; line-height: 1.5; color: #4A3222;">
   <p>¡Hola! Tu bono diario de monedas ya está disponible. Pasá a buscarlo cuando quieras 🎁</p>
   <p>
@@ -83,6 +100,7 @@ async function handleDailyNotifications(request: NextRequest): Promise<NextRespo
     // rather than crash if the pets query returned fewer rows than user_ids.
     const pet = petByUserId.get(prefRow.user_id);
     if (!pet) {
+      console.warn('daily-notifications cron: opted-in user has no pet row', prefRow.user_id);
       skipped += 1;
       continue;
     }

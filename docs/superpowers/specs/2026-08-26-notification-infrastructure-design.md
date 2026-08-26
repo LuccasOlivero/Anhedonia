@@ -35,7 +35,7 @@ This spec was split out of a broader "pet-initiated interaction" brainstorming s
 
 **Hard constraint on copy, inherited from Diario/Bond Score:** the email must never reference, imply, or hint at how long the user has been away, how many days they've missed, or use language framing the pet as waiting/missing them. It only ever states that something positive is available right now.
 
-**Frequency guarantee:** at most one email per user per calendar day, enforced by `last_daily_bonus_email_sent_date`, even across retries or a cron run firing more than once.
+**Frequency guarantee:** at most one email per user per calendar day is guaranteed across sequential cron runs (including retries after a failure) — the check-then-send-then-write sequence is not atomic, so two genuinely concurrent/overlapping invocations could theoretically both send before either's write-back completes. This is an accepted, extremely low-probability property at this feature's schedule (once daily) and scale, not a defect to fix.
 
 ## Data Model
 
