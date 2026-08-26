@@ -42,6 +42,11 @@ describe('computeBondTier', () => {
     expect(computeBondTier(100).tier).toBe('inseparables');
   });
 
+  it('clamps out-of-range scores to the nearest valid tier instead of defaulting to the lowest', () => {
+    expect(computeBondTier(150).tier).toBe('inseparables');
+    expect(computeBondTier(-10).tier).toBe('conociendose');
+  });
+
   it('never references, implies, or hints at the user\'s absence in any tier message', () => {
     // Hard constraint from the design spec: every message celebrates presence
     // ("verte", "me hace feliz", "sos parte de mi día"), never absence.

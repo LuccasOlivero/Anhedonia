@@ -273,3 +273,24 @@ alter table placed_items
 alter table pets add column if not exists bond_score smallint not null default 0;
 alter table pets add column if not exists bond_streak_days smallint not null default 0;
 alter table pets add column if not exists last_bond_sync_date date;
+
+-- --- Bond Score hardening: deferred findings from final review (added 2026-08-25) ---
+-- Run ONLY the block below — do not re-run the whole file. Safe to run once;
+-- the ADD CONSTRAINT statements are not wrapped in IF NOT EXISTS (Postgres
+-- doesn't support that for check constraints), so re-running this exact block
+-- a second time will error on "constraint already exists" rather than no-op.
+
+-- Constrains bond_score/bond_streak_days to the ranges the app's own logic
+-- already guarantees: bond_score is never client-supplied, and its only
+-- writer is the pure computeNextBondState function (lib/bond.ts), which
+-- already clamps bond_score to [0, 100] and never produces a negative
+-- bond_streak_days. These constraints close the gap where a hand-crafted
+-- REST call by a row's own owner could otherwise store an out-of-range value
+-- directly, matching the precedent already set by the
+-- placed_items_position_x_pct_check constraint added during the Casa &
+-- Tienda feature's own hardening pass.
+alter table pets add constraint pets_bond_score_check
+  check (bond_score >= 0 and bond_score <= 100);
+
+alter table pets add constraint pets_bond_streak_days_check
+  check (bond_streak_days >= 0);

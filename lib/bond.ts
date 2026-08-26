@@ -57,13 +57,22 @@ const BOND_TIERS: BondTierDefinition[] = [
   },
 ];
 
+export const BOND_SCORE_MIN = 0;
+export const BOND_SCORE_MAX = 100;
+
+// Clamps the input into [BOND_SCORE_MIN, BOND_SCORE_MAX] before matching a
+// tier. score can't leave that range from any real app code path today
+// (computeNextBondState already clamps it on every write), but a hand-crafted
+// out-of-range value should still map to the *nearest* valid tier rather than
+// silently falling back to BOND_TIERS[0] (Conociéndose) via the `?? BOND_TIERS[0]`
+// below — e.g. a stray 150 reads as Inseparables, not as if the pet were a
+// stranger.
 export function computeBondTier(score: number): BondTierInfo {
-  const definition = BOND_TIERS.find((t) => score >= t.min && score <= t.max) ?? BOND_TIERS[0];
+  const clamped = Math.max(BOND_SCORE_MIN, Math.min(BOND_SCORE_MAX, score));
+  const definition = BOND_TIERS.find((t) => clamped >= t.min && clamped <= t.max) ?? BOND_TIERS[0];
   return { tier: definition.tier, label: definition.label, message: definition.message };
 }
 
-export const BOND_SCORE_MIN = 0;
-export const BOND_SCORE_MAX = 100;
 export const BOND_SCORE_GROWTH_PER_CARED_FOR_DAY = 3;
 export const BOND_SCORE_DECAY_PER_MISSED_DAY = 1;
 

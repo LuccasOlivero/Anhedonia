@@ -14,7 +14,7 @@ export function WelcomeBackMessage({ message }: { message: string }) {
       <p className="text-sm font-semibold text-[#5B3FA6]">{message}</p>
       <button
         onClick={() => setDismissed(true)}
-        aria-label="Dismiss"
+        aria-label="Cerrar"
         className="shrink-0 rounded-full bg-white/70 px-2 py-1 text-xs font-bold text-[#5B3FA6] ring-1 ring-inset ring-[#8B5CF6]/20"
       >
         ✕

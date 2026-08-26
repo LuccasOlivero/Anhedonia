@@ -21,6 +21,18 @@ import type { PetRow } from './pet-engine';
 // large enough per pet to make that a real concern, and computeNextBondState
 // only ever walks days from last_bond_sync_date forward, so any older rows
 // in the result are harmless, unused input.
+//
+// KNOWN LIMITATION: the read-then-write here (read pet.bond_score/
+// bond_streak_days/last_bond_sync_date, compute the next state, then write
+// it back) has no transaction. Two concurrent first-loads-of-the-day for the
+// same pet, landing within the same narrow window, could both read the same
+// pre-sync snapshot and both write — the later-landing write would move
+// last_bond_sync_date backwards relative to the earlier one, causing one
+// calendar day to be re-evaluated on a later sync (a duplicate +3 growth or
+// -1 decay for that one day). This requires two genuinely simultaneous
+// requests within roughly a one-second window, once per day, making it less
+// reachable than the coins-award race this same codebase already accepts as
+// a known, accepted limitation in lib/missions-sync.ts.
 export async function syncBondScore(pet: PetRow): Promise<void> {
   try {
     const now = new Date();
