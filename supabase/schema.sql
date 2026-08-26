@@ -294,3 +294,36 @@ alter table pets add constraint pets_bond_score_check
 
 alter table pets add constraint pets_bond_streak_days_check
   check (bond_streak_days >= 0);
+
+-- --- Notification Infrastructure: daily bonus email opt-in (added 2026-08-26) ---
+-- Every table/column above this point is already live in the Supabase project.
+-- Run ONLY the block below (SQL Editor > New query > Run) — do not re-run the
+-- whole file. This creates a new table, so re-running this exact block a
+-- second time will error on "relation already exists" rather than no-op —
+-- same one-time-only caveat as every other dated block in this file.
+
+create table notification_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  daily_bonus_email_enabled boolean not null default false,
+  last_daily_bonus_email_sent_date date
+);
+
+alter table notification_preferences enable row level security;
+
+-- Scoped to exactly select/insert/update (no delete — there's no
+-- user-facing "remove my preferences" action) from the start, rather than a
+-- broad `for all` policy. This project already learned that lesson the hard
+-- way with the Currency & Missions feature's mission_events table, which
+-- shipped with `for all` and needed a same-day hardening pass to narrow it.
+create policy "Users read their own notification preferences"
+  on notification_preferences for select
+  using (auth.uid() = user_id);
+
+create policy "Users create their own notification preferences"
+  on notification_preferences for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users update their own notification preferences"
+  on notification_preferences for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
