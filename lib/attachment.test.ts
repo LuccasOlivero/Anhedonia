@@ -3,7 +3,6 @@ import {
   getAvailableStreakReward,
   getPetVulnerability,
   getPetThought,
-  STREAK_MILESTONES,
 } from './attachment';
 import type { PetRow, PetStats } from './pet-engine';
 
