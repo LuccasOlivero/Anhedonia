@@ -25,7 +25,7 @@ export interface PetRoomStageProps {
 
 export function PetRoomStage({
   petRow,
-  stats,
+  stats: _stats,
   isSick,
   mood,
   lifeStage,
