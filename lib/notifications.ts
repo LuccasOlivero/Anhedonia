@@ -1,5 +1,6 @@
 import { computePeriodKey, shouldGrantDailyBonus } from './missions';
 import type { PetRow } from './pet-engine';
+import { getAvailableStreakReward } from './attachment';
 
 export interface NotificationPreferences {
   daily_bonus_email_enabled: boolean;
@@ -27,3 +28,18 @@ export function shouldSendDailyBonusEmail(pet: PetRow, prefs: NotificationPrefer
 
   return shouldGrantDailyBonus(pet.last_daily_bonus_at, now);
 }
+
+export function shouldSendStreakSurpriseEmail(
+  pet: PetRow,
+  prefs: NotificationPreferences,
+  now: Date
+): boolean {
+  if (!prefs.streak_surprise_email_enabled) return false;
+
+  const todayKey = computePeriodKey('daily', now);
+  if (prefs.last_streak_surprise_email_sent_date === todayKey) return false;
+
+  const availableReward = getAvailableStreakReward(pet);
+  return availableReward !== null;
+}
+

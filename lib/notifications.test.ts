@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { shouldSendDailyBonusEmail, type NotificationPreferences } from './notifications';
+import { shouldSendDailyBonusEmail, shouldSendStreakSurpriseEmail, type NotificationPreferences } from './notifications';
 import { computePeriodKey, shouldGrantDailyBonus } from './missions';
 import type { PetRow } from './pet-engine';
 
@@ -109,3 +109,36 @@ describe('shouldSendDailyBonusEmail', () => {
     expect(shouldSendDailyBonusEmail(pet, prefs, now)).toBe(true);
   });
 });
+
+describe('shouldSendStreakSurpriseEmail', () => {
+  const mockPet = makePet({
+    bond_streak_days: 7,
+    last_streak_milestone_claimed: 0,
+  });
+
+  const mockPrefs: NotificationPreferences = {
+    daily_bonus_email_enabled: false,
+    last_daily_bonus_email_sent_date: null,
+    streak_surprise_email_enabled: true,
+    last_streak_surprise_email_sent_date: null,
+  };
+
+  it('returns false if streak_surprise_email_enabled is false', () => {
+    expect(shouldSendStreakSurpriseEmail(mockPet, { ...mockPrefs, streak_surprise_email_enabled: false }, new Date())).toBe(false);
+  });
+
+  it('returns false if already sent today', () => {
+    const now = new Date('2026-08-28T12:00:00Z');
+    expect(shouldSendStreakSurpriseEmail(mockPet, { ...mockPrefs, last_streak_surprise_email_sent_date: '2026-08-28' }, now)).toBe(false);
+  });
+
+  it('returns false if no streak reward is available', () => {
+    const claimedPet = makePet({ ...mockPet, last_streak_milestone_claimed: 7 });
+    expect(shouldSendStreakSurpriseEmail(claimedPet, mockPrefs, new Date())).toBe(false);
+  });
+
+  it('returns true if opted in, not sent today, and streak reward is available', () => {
+    expect(shouldSendStreakSurpriseEmail(mockPet, mockPrefs, new Date('2026-08-28T12:00:00Z'))).toBe(true);
+  });
+});
+
