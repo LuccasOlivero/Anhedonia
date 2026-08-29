@@ -43,21 +43,21 @@ export function ActionButtons({ isSleeping, isSick }: { isSleeping: boolean; isS
       {showEating && <p className="text-center text-sm font-semibold text-[#8B5E3C]">😋 Eating...</p>}
       {error && <p role="alert" className="text-center text-sm font-semibold text-[#F4436C]">{error}</p>}
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={handleFeed} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.feed)}>
+        <button id="action-feed" onClick={handleFeed} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.feed)}>
           🍖 Feed
         </button>
-        <button onClick={() => runAction(play)} disabled={isPending || isSleeping} className={buttonClass(BUTTON_GRADIENT.play)}>
+        <button id="action-play" onClick={() => runAction(play)} disabled={isPending || isSleeping} className={buttonClass(BUTTON_GRADIENT.play)}>
           🎮 Play
         </button>
-        <button onClick={() => runAction(bathe)} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.bathe)}>
+        <button id="action-bathe" onClick={() => runAction(bathe)} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.bathe)}>
           🛁 Bathe
         </button>
-        <button onClick={() => runAction(toggleSleep)} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.sleep)}>
+        <button id="action-sleep" onClick={() => runAction(toggleSleep)} disabled={isPending} className={buttonClass(BUTTON_GRADIENT.sleep)}>
           {isSleeping ? '☀️ Wake' : '💤 Sleep'}
         </button>
       </div>
       {isSick && (
-        <button onClick={() => runAction(medicine)} disabled={isPending} className={`w-full ${buttonClass(BUTTON_GRADIENT.medicine)}`}>
+        <button id="action-medicine" onClick={() => runAction(medicine)} disabled={isPending} className={`w-full ${buttonClass(BUTTON_GRADIENT.medicine)}`}>
           💊 Medicine
         </button>
       )}

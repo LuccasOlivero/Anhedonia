@@ -11,10 +11,12 @@ import {
   computeMood,
   type PetRow,
 } from '@/lib/pet-engine';
+import { getPetThought } from '@/lib/attachment';
 import { StatBar } from './StatBar';
 import { ActionButtons } from './ActionButtons';
 import { BondScore } from './BondScore';
 import { WelcomeBackMessage } from './WelcomeBackMessage';
+import { PetSpeechBubble } from './PetSpeechBubble';
 
 export default async function PetPage() {
   const supabase = await createClient();
@@ -38,6 +40,7 @@ export default async function PetPage() {
   const lifeStage = computeLifeStage(new Date(petRow.created_at), now);
   const mood = computeMood(stats, isSick, petRow.is_sleeping);
   const bondTier = computeBondTier(petRow.bond_score);
+  const thought = getPetThought(petRow, stats, isSick, mood);
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-6 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-10">
@@ -76,6 +79,10 @@ export default async function PetPage() {
         </div>
 
         <WelcomeBackMessage message={bondTier.message} />
+
+        {lifeStage !== 'egg' && (
+          <PetSpeechBubble thought={thought} petName={petRow.name} />
+        )}
 
         <div className="flex flex-col items-center">
           <div className="-mb-4 h-6 w-40 rounded-full bg-[#8FBF6A]/50 blur-sm" />
