@@ -7,7 +7,7 @@ import type { PetStats } from '@/lib/pet-engine';
 import type { BondTierInfo } from '@/lib/bond';
 
 describe('StatusGauge Component', () => {
-  it('renders progressive horizontal bar with correct progress attributes', () => {
+  it('renders progressive horizontal bar with correct progress attributes in default auto mode', () => {
     const html = renderToStaticMarkup(
       React.createElement(StatusGauge, {
         stat: 'hunger',
@@ -25,6 +25,58 @@ describe('StatusGauge Component', () => {
     expect(html).toContain('Hambre: 75%');
     expect(html).toContain('75%');
     expect(html).toContain('width:75%');
+  });
+
+  it('renders both circular gauge on mobile and bar gauge on desktop when variant="auto"', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(StatusGauge, {
+        stat: 'happiness',
+        value: 80,
+        variant: 'auto',
+      })
+    );
+
+    // Circular mobile gauge
+    expect(html).toContain('inline-flex sm:hidden');
+    expect(html).toContain('<svg');
+    expect(html).toContain('<circle');
+
+    // Desktop bar gauge
+    expect(html).toContain('hidden sm:inline-flex');
+    expect(html).toContain('width:80%');
+  });
+
+  it('renders ONLY circular SVG gauge when variant="circle"', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(StatusGauge, {
+        stat: 'energy',
+        value: 65,
+        variant: 'circle',
+        showValueText: true,
+      })
+    );
+
+    expect(html).toContain('<svg');
+    expect(html).toContain('<circle');
+    expect(html).toContain('65%');
+    expect(html).not.toContain('hidden sm:inline-flex');
+    expect(html).not.toContain('width:65%');
+  });
+
+  it('renders ONLY progressive horizontal bar when variant="bar"', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(StatusGauge, {
+        stat: 'cleanliness',
+        value: 90,
+        variant: 'bar',
+      })
+    );
+
+    expect(html).toContain('width:90%');
+    expect(html).toContain('90%');
+    expect(html).not.toContain('<svg');
+    expect(html).not.toContain('<circle');
+    expect(html).not.toContain('inline-flex sm:hidden');
   });
 
   it('clamps values below 0 to 0% and above 100 to 100%', () => {
@@ -167,7 +219,7 @@ describe('PetHUD Component', () => {
     message: '¡Sos parte de mi día! 🥰',
   };
 
-  it('renders all HUD elements: Level Badge, Nameplate, 4 Gauges, and Coin Capsule', () => {
+  it('renders all HUD elements: Level Badge, Nameplate, 4 Gauges, and Coin Capsule with 100% fullwidth wooden banner styling', () => {
     const html = renderToStaticMarkup(
       React.createElement(PetHUD, {
         petName: 'Mishi',
@@ -178,8 +230,10 @@ describe('PetHUD Component', () => {
       })
     );
 
-    // Header container
+    // Header container with 100% full-width wooden banner styling
     expect(html).toContain('data-testid="pet-hud"');
+    expect(html).toContain('border-b-4 border-[#58331A]');
+    expect(html).toContain('from-[#FFFDF8] to-[#F5EAD6]');
 
     // Level Badge
     expect(html).toContain('data-testid="pet-hud-level"');

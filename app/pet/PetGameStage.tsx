@@ -356,89 +356,91 @@ export function PetGameStage({
 
   return (
     <PetGameStageContext.Provider value={contextValue}>
-      <div className="pet-sky-bg min-h-dvh w-full flex items-center justify-center p-2 sm:p-4 md:p-6 select-none overflow-x-hidden">
-        <div
-          role="region"
-          aria-label="Pet Society Escenario de Juego"
-          className={`pet-wood-frame relative flex flex-col w-full max-w-[960px] h-[640px] max-h-[calc(100dvh-1rem)] min-h-[500px] rounded-[28px] overflow-hidden bg-[#FFF9EC] shadow-[0_16px_40px_rgba(0,0,0,0.35)] ${className}`}
-        >
-          {resolvedHud && (
-            <header className="relative z-10 w-full shrink-0" data-testid="pet-game-hud">
-              {resolvedHud}
-            </header>
-          )}
+      <div className="pet-sky-bg min-h-dvh w-full flex flex-col items-center justify-between select-none overflow-x-hidden">
+        {resolvedHud && (
+          <header className="relative z-20 w-full shrink-0" data-testid="pet-game-hud">
+            {resolvedHud}
+          </header>
+        )}
 
-          <main className="relative z-0 flex-1 w-full overflow-hidden flex flex-col" data-testid="pet-game-room">
-            {resolvedRoom}
-            {children}
+        <div className="flex-1 w-full flex items-center justify-center p-2 sm:p-4 md:p-6">
+          <div
+            role="region"
+            aria-label="Pet Society Escenario de Juego"
+            className={`pet-wood-frame relative flex flex-col w-full max-w-[960px] h-[580px] sm:h-[620px] max-h-[calc(100dvh-5.5rem)] min-h-[460px] rounded-[28px] overflow-hidden bg-[#FFF9EC] shadow-[0_16px_40px_rgba(0,0,0,0.35)] ${className}`}
+          >
+            <main className="relative z-0 flex-1 w-full overflow-hidden flex flex-col" data-testid="pet-game-room">
+              {resolvedRoom}
+              {children}
 
-            {/* Decorating Mode Item Placement Tray */}
-            {isDecorating && (
-              <div
-                data-testid="pet-decorating-tray"
-                className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 overflow-x-auto bg-[#FFF9EC]/95 backdrop-blur-sm border-t-2 border-[#C89B6C] p-2 sm:p-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-200"
-              >
-                <span className="text-xs font-bold uppercase tracking-wider text-[#8B5E3C] shrink-0 pl-1">
-                  Muebles:
-                </span>
-                {itemsWithOwnership.map((item) =>
-                  item.owned ? (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleTrayTap(item)}
-                      disabled={isPending}
-                      title={`Colocar ${item.name}`}
-                      data-testid={`tray-item-${item.id}`}
-                      className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-[#58331A] bg-white px-2.5 py-1 shadow-[0_2px_0_#58331A] hover:scale-105 active:translate-y-[1px] active:shadow-none transition-transform cursor-pointer"
-                    >
-                      <span className="text-2xl select-none">{item.emoji}</span>
-                      <span className="text-[10px] font-bold text-[#58331A] truncate max-w-[60px]">
-                        {item.name}
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => openModal('tienda')}
-                      title={`Comprar ${item.name} en la Tienda`}
-                      data-testid={`tray-item-locked-${item.id}`}
-                      className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-[#C89B6C]/40 bg-white/40 px-2.5 py-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-                    >
-                      <span className="text-2xl select-none">🔒</span>
-                      <span className="text-[10px] font-semibold text-[#8B5E3C] truncate max-w-[60px]">
-                        {item.name}
-                      </span>
-                    </button>
-                  )
-                )}
-                <button
-                  type="button"
-                  onClick={handleToggleDecorate}
-                  className="ml-auto shrink-0 px-3 py-1.5 rounded-full border-2 border-[#58331A] bg-gradient-to-b from-[#FDE047] to-[#F59E0B] text-[#58331A] text-xs font-bold shadow-[0_2px_0_#58331A] active:translate-y-[1px] active:shadow-none cursor-pointer"
+              {/* Decorating Mode Item Placement Tray */}
+              {isDecorating && (
+                <div
+                  data-testid="pet-decorating-tray"
+                  className="absolute inset-x-0 bottom-0 z-20 flex items-center gap-2 overflow-x-auto bg-[#FFF9EC]/95 backdrop-blur-sm border-t-2 border-[#C89B6C] p-2 sm:p-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-200"
                 >
-                  ✅ Listo
-                </button>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#8B5E3C] shrink-0 pl-1">
+                    Muebles:
+                  </span>
+                  {itemsWithOwnership.map((item) =>
+                    item.owned ? (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleTrayTap(item)}
+                        disabled={isPending}
+                        title={`Colocar ${item.name}`}
+                        data-testid={`tray-item-${item.id}`}
+                        className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-[#58331A] bg-white px-2.5 py-1 shadow-[0_2px_0_#58331A] hover:scale-105 active:translate-y-[1px] active:shadow-none transition-transform cursor-pointer"
+                      >
+                        <span className="text-2xl select-none">{item.emoji}</span>
+                        <span className="text-[10px] font-bold text-[#58331A] truncate max-w-[60px]">
+                          {item.name}
+                        </span>
+                      </button>
+                    ) : (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => openModal('tienda')}
+                        title={`Comprar ${item.name} en la Tienda`}
+                        data-testid={`tray-item-locked-${item.id}`}
+                        className="flex shrink-0 flex-col items-center gap-0.5 rounded-xl border-2 border-[#C89B6C]/40 bg-white/40 px-2.5 py-1 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <span className="text-2xl select-none">🔒</span>
+                        <span className="text-[10px] font-semibold text-[#8B5E3C] truncate max-w-[60px]">
+                          {item.name}
+                        </span>
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleToggleDecorate}
+                    className="ml-auto shrink-0 px-3 py-1.5 rounded-full border-2 border-[#58331A] bg-gradient-to-b from-[#FDE047] to-[#F59E0B] text-[#58331A] text-xs font-bold shadow-[0_2px_0_#58331A] active:translate-y-[1px] active:shadow-none cursor-pointer"
+                  >
+                    ✅ Listo
+                  </button>
+                </div>
+              )}
+            </main>
+
+            {resolvedDock && (
+              <footer className="relative z-10 w-full shrink-0" data-testid="pet-game-dock">
+                {resolvedDock}
+              </footer>
+            )}
+
+            {currentModal && resolvedModalContent && (
+              <div
+                className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-2 sm:p-4 animate-pet-pop"
+                data-testid="pet-game-modal-overlay"
+                onClick={handleBackdropClick}
+              >
+                {resolvedModalContent}
               </div>
             )}
-          </main>
-
-          {resolvedDock && (
-            <footer className="relative z-10 w-full shrink-0" data-testid="pet-game-dock">
-              {resolvedDock}
-            </footer>
-          )}
-
-          {currentModal && resolvedModalContent && (
-            <div
-              className="absolute inset-0 z-30 flex items-center justify-center bg-black/45 backdrop-blur-[2px] p-2 sm:p-4 animate-pet-pop"
-              data-testid="pet-game-modal-overlay"
-              onClick={handleBackdropClick}
-            >
-              {resolvedModalContent}
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </PetGameStageContext.Provider>

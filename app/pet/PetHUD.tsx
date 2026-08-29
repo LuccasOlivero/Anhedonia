@@ -70,7 +70,7 @@ export function PetHUD({
   return (
     <div
       data-testid="pet-hud"
-      className={`w-full flex items-center justify-between gap-2 sm:gap-4 px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-b from-[#FFFDF8]/95 to-[#F5EAD6]/95 border-b-2 border-[#58331A]/30 shadow-[0_2px_8px_rgba(88,51,26,0.12)] select-none ${className}`}
+      className={`w-full flex items-center justify-between gap-2 sm:gap-4 px-3 py-2 sm:px-6 sm:py-2.5 bg-gradient-to-b from-[#FFFDF8] to-[#F5EAD6] border-b-4 border-[#58331A] shadow-[0_4px_12px_rgba(88,51,26,0.18)] select-none ${className}`}
     >
       {/* Left Section: Level Emblem & Carved Nameplate */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
@@ -116,29 +116,25 @@ export function PetHUD({
           stat="hunger"
           value={hungerVal}
           label="Hambre"
-          size={46}
-          strokeWidth={5}
+          variant="auto"
         />
         <StatusGauge
           stat="happiness"
           value={happinessVal}
           label="Felicidad"
-          size={46}
-          strokeWidth={5}
+          variant="auto"
         />
         <StatusGauge
           stat="energy"
           value={energyVal}
           label="Energía"
-          size={46}
-          strokeWidth={5}
+          variant="auto"
         />
         <StatusGauge
           stat="cleanliness"
           value={cleanlinessVal}
           label="Higiene"
-          size={46}
-          strokeWidth={5}
+          variant="auto"
         />
       </div>
 
