@@ -1,21 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import type { PetThought } from '@/lib/attachment';
+import type { PetThought, StreakReward } from '@/lib/attachment';
 import { StreakRewardModal } from './StreakRewardModal';
 
-interface Props {
+export interface PetSpeechBubbleProps {
   thought: PetThought;
   petName: string;
+  className?: string;
+  onOpenStreakModal?: (reward: StreakReward) => void;
 }
 
-export function PetSpeechBubble({ thought, petName }: Props) {
+export function PetSpeechBubble({
+  thought,
+  petName,
+  className = '',
+  onOpenStreakModal,
+}: PetSpeechBubbleProps) {
   const [showModal, setShowModal] = useState(false);
   const [loved, setLoved] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (thought.type === 'gift' && thought.reward) {
-      setShowModal(true);
+      if (onOpenStreakModal) {
+        onOpenStreakModal(thought.reward);
+      } else {
+        setShowModal(true);
+      }
     } else if (thought.type === 'vulnerability' && thought.action) {
       const el = document.getElementById(`action-${thought.action}`);
       if (el) {
@@ -31,10 +43,11 @@ export function PetSpeechBubble({ thought, petName }: Props) {
 
   return (
     <>
-      <div className="relative flex flex-col items-center">
+      <div className={`relative flex flex-col items-center ${className}`}>
         <button
+          type="button"
           onClick={handleClick}
-          className="group relative max-w-[280px] rounded-2xl border-2 border-[#6B4226] bg-[#FFF9EC] px-4 py-2.5 text-center text-sm font-semibold text-[#4A3222] shadow-[0_3px_6px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
+          className="group relative max-w-[280px] rounded-2xl border-2 border-[#6B4226] bg-[#FFF9EC] px-4 py-2 text-center text-xs sm:text-sm font-semibold text-[#4A3222] shadow-[0_3px_6px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer select-none"
         >
           {loved ? '¡Prrr! ❤️' : thought.message}
           {thought.type === 'gift' && (
