@@ -7,6 +7,8 @@ export interface Stats {
   energy: number;
   cleanliness: number;
 }
+export type PetStats = Stats;
+
 
 export interface PetRow {
   id: string;
@@ -105,6 +107,8 @@ export function computeIsSick(pet: PetRow, now: Date): boolean {
 }
 
 export type MoodState = Exclude<SpriteState, 'eating'>;
+export type PetMood = MoodState;
+
 
 export function computeMood(stats: Stats, isSick: boolean, isSleeping: boolean): MoodState {
   if (isSleeping) return 'sleeping';
