@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId } from 'react';
+import React from 'react';
 
 export type StatType =
   | 'hunger'
@@ -122,26 +122,13 @@ export function StatusGauge({
   value,
   label,
   icon,
-  size = 56,
-  strokeWidth = 6,
   className = '',
-  showValueText = false,
 }: StatusGaugeProps) {
-  const uniqueId = useId().replace(/:/g, '');
   const config = STAT_CONFIGS[stat.toLowerCase()] ?? DEFAULT_STAT_CONFIG;
   const displayLabel = label ?? config.label;
   const displayIcon = icon ?? config.icon;
 
   const clampedValue = Math.max(0, Math.min(100, Math.round(Number.isFinite(value) ? value : 0)));
-
-  // SVG Geometry calculations
-  const center = size / 2;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (clampedValue / 100) * circumference;
-
-  const gradientId = `gauge-grad-${config.key}-${uniqueId}`;
-  const glossId = `gauge-gloss-${uniqueId}`;
 
   return (
     <div
@@ -153,82 +140,37 @@ export function StatusGauge({
       title={`${displayLabel}: ${clampedValue}%`}
       tabIndex={0}
       data-testid={`status-gauge-${config.key}`}
-      className={`group relative inline-flex flex-col items-center justify-center cursor-pointer outline-none select-none transition-transform hover:scale-105 active:scale-95 ${className}`}
+      className={`group relative inline-flex items-center cursor-pointer outline-none select-none transition-transform hover:scale-105 active:scale-95 ${className}`}
     >
-      {/* Circular Housing with Wooden / 3D Shadow Border */}
-      <div
-        className="relative flex items-center justify-center rounded-full border-2 border-[#58331A] bg-[#FFF9EC] shadow-[0_3px_0_#58331A,0_4px_8px_rgba(0,0,0,0.2)] overflow-visible"
-        style={{ width: size, height: size }}
-      >
-        <svg
-          width={size}
-          height={size}
-          viewBox={`0 0 ${size} ${size}`}
-          className="absolute inset-0 block"
-        >
-          <defs>
-            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={config.gradientFrom} />
-              <stop offset="100%" stopColor={config.gradientTo} />
-            </linearGradient>
-            <linearGradient id={glossId} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.65" />
-              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-            </linearGradient>
-          </defs>
+      {/* Pill housing with Pet Society wooden border */}
+      <div className="relative flex items-center h-7 sm:h-8 pl-1 pr-2.5 py-0.5 rounded-full border-2 border-[#58331A] bg-[#FFF9EC] shadow-[0_2px_0_#58331A,0_2px_4px_rgba(0,0,0,0.15)] min-w-[90px] sm:min-w-[110px] md:min-w-[125px]">
+        {/* Left circular icon badge with frame and border */}
+        <div className="relative -ml-0.5 mr-1.5 flex items-center justify-center w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full border-2 border-[#58331A] bg-[#FFFDF8] shadow-[0_1px_2px_rgba(0,0,0,0.15)] shrink-0 z-10">
+          <span className="text-xs sm:text-sm select-none filter drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]">
+            {displayIcon}
+          </span>
+        </div>
 
-          {/* Background Track Circle */}
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="#FFFDF8"
-            stroke="rgba(88, 51, 26, 0.15)"
-            strokeWidth={strokeWidth}
-          />
-
-          {/* Active Radial Progress Circle */}
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke={`url(#${gradientId})`}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference.toFixed(2)}
-            strokeDashoffset={strokeDashoffset.toFixed(2)}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${center} ${center})`}
+        {/* Progress track */}
+        <div className="relative flex-1 h-3.5 sm:h-4 bg-[#EBDDC3] rounded-full overflow-hidden border border-[#58331A]/25 shadow-[inset_0_1px_2px_rgba(88,51,26,0.25)]">
+          {/* Active progressive candy gradient fill */}
+          <div
+            className="relative h-full rounded-full transition-all duration-300 ease-out"
             style={{
-              transition: 'stroke-dashoffset 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              width: `${clampedValue}%`,
+              background: `linear-gradient(to right, ${config.gradientFrom}, ${config.gradientTo})`,
             }}
-          />
+          >
+            {/* Top specular gloss reflection */}
+            <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-gradient-to-b from-white/60 to-transparent" />
+          </div>
 
-          {/* Inner Specular Highlight Crescent */}
-          <ellipse
-            cx={center}
-            cy={center * 0.52}
-            rx={radius * 0.72}
-            ry={radius * 0.36}
-            fill={`url(#${glossId})`}
-            pointerEvents="none"
-          />
-        </svg>
-
-        {/* Center Icon */}
-        <span
-          className="relative z-10 select-none filter drop-shadow-[0_1px_1px_rgba(0,0,0,0.2)]"
-          style={{ fontSize: `${Math.round(size * 0.38)}px`, lineHeight: 1 }}
-        >
-          {displayIcon}
-        </span>
+          {/* Centered percentage label over track */}
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] sm:text-[10px] font-bold text-[#58331A] font-[family-name:var(--font-display)] drop-shadow-[0_1px_0_rgba(255,255,255,0.7)] leading-none select-none">
+            {clampedValue}%
+          </span>
+        </div>
       </div>
-
-      {showValueText && (
-        <span className="mt-1 text-[11px] font-bold text-[#58331A] drop-shadow-sm">
-          {clampedValue}%
-        </span>
-      )}
 
       {/* Pet Society Themed Tooltip on Hover / Focus / Tap */}
       <div

@@ -7,7 +7,7 @@ import type { PetStats } from '@/lib/pet-engine';
 import type { BondTierInfo } from '@/lib/bond';
 
 describe('StatusGauge Component', () => {
-  it('renders SVG circular gauge with correct progress attributes', () => {
+  it('renders progressive horizontal bar with correct progress attributes', () => {
     const html = renderToStaticMarkup(
       React.createElement(StatusGauge, {
         stat: 'hunger',
@@ -23,6 +23,8 @@ describe('StatusGauge Component', () => {
     expect(html).toContain('aria-label="Hambre: 75%"');
     expect(html).toContain('🍖');
     expect(html).toContain('Hambre: 75%');
+    expect(html).toContain('75%');
+    expect(html).toContain('width:75%');
   });
 
   it('clamps values below 0 to 0% and above 100 to 100%', () => {
@@ -33,6 +35,7 @@ describe('StatusGauge Component', () => {
       })
     );
     expect(htmlUnder).toContain('aria-valuenow="0"');
+    expect(htmlUnder).toContain('width:0%');
     expect(htmlUnder).toContain('0%');
 
     const htmlOver = renderToStaticMarkup(
@@ -42,47 +45,34 @@ describe('StatusGauge Component', () => {
       })
     );
     expect(htmlOver).toContain('aria-valuenow="100"');
+    expect(htmlOver).toContain('width:100%');
     expect(htmlOver).toContain('100%');
   });
 
-  it('computes stroke-dasharray and stroke-dashoffset correctly for 0%, 50%, and 100%', () => {
-    const size = 56;
-    const strokeWidth = 6;
-    const radius = (size - strokeWidth) / 2; // 25
-    const circumference = 2 * Math.PI * radius; // ~157.0796
-
+  it('computes bar progress width correctly for 0%, 50%, and 100%', () => {
     const html0 = renderToStaticMarkup(
       React.createElement(StatusGauge, {
         stat: 'hunger',
         value: 0,
-        size,
-        strokeWidth,
       })
     );
-    // At 0%, stroke-dashoffset equals circumference
-    expect(html0).toContain(`stroke-dasharray="${circumference.toFixed(2)}"`);
-    expect(html0).toContain(`stroke-dashoffset="${circumference.toFixed(2)}"`);
+    expect(html0).toContain('width:0%');
 
     const html50 = renderToStaticMarkup(
       React.createElement(StatusGauge, {
         stat: 'hunger',
         value: 50,
-        size,
-        strokeWidth,
       })
     );
-    const offset50 = circumference - (50 / 100) * circumference;
-    expect(html50).toContain(`stroke-dashoffset="${offset50.toFixed(2)}"`);
+    expect(html50).toContain('width:50%');
 
     const html100 = renderToStaticMarkup(
       React.createElement(StatusGauge, {
         stat: 'hunger',
         value: 100,
-        size,
-        strokeWidth,
       })
     );
-    expect(html100).toContain('stroke-dashoffset="0.00"');
+    expect(html100).toContain('width:100%');
   });
 
   it('renders exact gradient colors per stat type', () => {
