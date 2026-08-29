@@ -25,7 +25,7 @@ function labelFor(petName: string, entry: AnyEntry): string {
     case 'recovered':
       return `${petName} se recuperó 💊✨`;
     case 'note':
-      return `A memory about ${petName} 📝`;
+      return `Un recuerdo de ${petName} 📝`;
   }
 }
 
@@ -72,10 +72,10 @@ export default async function DiaryPage() {
       <div className="w-full max-w-sm space-y-4">
         <div className="flex items-center justify-between">
           <Link href="/pet" className="text-sm font-semibold text-[#4A3222] underline">
-            ← Back
+            ← Volver
           </Link>
           <h1 className="text-xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">
-            {petRow.name}&apos;s Diary
+            Diario de {petRow.name}
           </h1>
         </div>
 
@@ -86,7 +86,7 @@ export default async function DiaryPage() {
         <div className="space-y-3">
           {timeline.length === 0 && (
             <p className="text-center text-sm font-semibold text-[#8B5E3C]">
-              No memories yet. Check back soon!
+              Todavía no hay recuerdos. ¡Volvé pronto!
             </p>
           )}
           {timeline.map((item) => (

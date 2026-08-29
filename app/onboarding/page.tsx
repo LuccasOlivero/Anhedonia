@@ -12,7 +12,7 @@ export default async function OnboardingPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-12">
-      <h1 className="text-center text-3xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Welcome! Let&apos;s create your pet.</h1>
+      <h1 className="text-center text-3xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">¡Hola! Creemos a tu mascota.</h1>
       <OnboardingForm />
     </main>
   );

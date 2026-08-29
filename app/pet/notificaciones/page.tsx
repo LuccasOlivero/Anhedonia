@@ -35,10 +35,10 @@ export default async function NotificationsPage() {
       <div className="w-full max-w-sm space-y-4">
         <div className="flex items-center justify-between">
           <Link href="/pet" className="text-sm font-semibold text-[#4A3222] underline">
-            ← Back
+            ← Volver
           </Link>
           <h1 className="text-xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">
-            {petRow.name}&apos;s Notificaciones
+            Notificaciones de {petRow.name}
           </h1>
         </div>
 

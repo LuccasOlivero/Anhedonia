@@ -88,8 +88,8 @@ export default async function PetPage() {
           <div className="-mb-4 h-6 w-40 rounded-full bg-[#8FBF6A]/50 blur-sm" />
           {lifeStage === 'egg' ? (
             <>
-              <img src="/egg-sprite.svg" alt="Egg" width={180} height={180} className="drop-shadow-lg" />
-              <p className="mt-2 text-sm font-semibold text-[#8B5E3C]">Your pet is about to hatch.</p>
+              <img src="/egg-sprite.svg" alt="Huevo" width={180} height={180} className="drop-shadow-lg" />
+              <p className="mt-2 text-sm font-semibold text-[#8B5E3C]">Tu mascota está a punto de salir del huevo.</p>
             </>
           ) : (
             <img
@@ -102,10 +102,10 @@ export default async function PetPage() {
         </div>
 
         <div className="space-y-3">
-          <StatBar label="Hunger" value={stats.hunger} />
-          <StatBar label="Happiness" value={stats.happiness} />
-          <StatBar label="Energy" value={stats.energy} />
-          <StatBar label="Cleanliness" value={stats.cleanliness} />
+          <StatBar label="Hambre" value={stats.hunger} />
+          <StatBar label="Felicidad" value={stats.happiness} />
+          <StatBar label="Energía" value={stats.energy} />
+          <StatBar label="Higiene" value={stats.cleanliness} />
         </div>
 
         <BondScore score={petRow.bond_score} tierLabel={bondTier.label} />

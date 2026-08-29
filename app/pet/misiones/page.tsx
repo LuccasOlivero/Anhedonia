@@ -39,10 +39,10 @@ export default async function MissionsPage() {
       <div className="w-full max-w-sm space-y-4">
         <div className="flex items-center justify-between">
           <Link href="/pet" className="text-sm font-semibold text-[#4A3222] underline">
-            ← Back
+            ← Volver
           </Link>
           <h1 className="text-xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">
-            {freshPetRow.name}&apos;s Missions
+            Misiones de {freshPetRow.name}
           </h1>
         </div>
 
@@ -61,7 +61,7 @@ export default async function MissionsPage() {
                     {p.mission.description}
                   </p>
                   <p className="text-xs font-semibold text-[#8B5E3C]">
-                    {p.mission.period === 'daily' ? 'Daily' : 'Weekly'} ·{' '}
+                    {p.mission.period === 'daily' ? 'Diaria' : 'Semanal'} ·{' '}
                     {Math.min(p.count, p.mission.threshold)}/{p.mission.threshold}
                   </p>
                 </div>
@@ -70,7 +70,7 @@ export default async function MissionsPage() {
                 </span>
               </div>
               {p.isCompleted && (
-                <p className="mt-2 text-sm font-semibold text-[#4FD1C5]">✅ Completed for this period</p>
+                <p className="mt-2 text-sm font-semibold text-[#4FD1C5]">✅ Completada por este período</p>
               )}
             </div>
           ))}

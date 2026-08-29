@@ -105,7 +105,7 @@ export function Room({
 
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-4">
         <Link href="/pet" className={`${pillClass} pointer-events-auto`}>
-          ← Back
+          ← Volver
         </Link>
         <h1 className={`${pillClass} pointer-events-auto font-[family-name:var(--font-display)]`}>{petName}</h1>
         <div className="pointer-events-auto flex items-center gap-2">

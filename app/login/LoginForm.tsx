@@ -19,13 +19,13 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       <form action={signInAction} className={cardClass}>
-        <h2 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Log in</h2>
+        <h2 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Iniciar sesión</h2>
         <label className="block space-y-1">
           <span className={labelClass}>Email</span>
           <input type="email" name="email" required className={inputClass} />
         </label>
         <label className="block space-y-1">
-          <span className={labelClass}>Password</span>
+          <span className={labelClass}>Contraseña</span>
           <input type="password" name="password" required minLength={6} className={inputClass} />
         </label>
         {signInState?.error && (
@@ -38,18 +38,18 @@ export function LoginForm() {
           disabled={signInPending}
           className={`${buttonClass} bg-gradient-to-b from-[#7EE8DB] to-[#4FD1C5]`}
         >
-          Log in
+          {signInPending ? 'Ingresando...' : 'Ingresar'}
         </button>
       </form>
 
       <form action={signUpAction} className={cardClass}>
-        <h2 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Sign up</h2>
+        <h2 className="text-center text-2xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Crear cuenta</h2>
         <label className="block space-y-1">
           <span className={labelClass}>Email</span>
           <input type="email" name="email" required className={inputClass} />
         </label>
         <label className="block space-y-1">
-          <span className={labelClass}>Password</span>
+          <span className={labelClass}>Contraseña (mínimo 6 caracteres)</span>
           <input type="password" name="password" required minLength={6} className={inputClass} />
         </label>
         {signUpState?.error && (
@@ -62,7 +62,7 @@ export function LoginForm() {
           disabled={signUpPending}
           className={`${buttonClass} bg-gradient-to-b from-[#FFB199] to-[#FF8966]`}
         >
-          Sign up
+          {signUpPending ? 'Creando cuenta...' : 'Registrarme'}
         </button>
       </form>
     </div>

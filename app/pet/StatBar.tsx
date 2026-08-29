@@ -1,4 +1,8 @@
 const STAT_ICONS: Record<string, string> = {
+  Hambre: '🍖',
+  Felicidad: '😊',
+  Energía: '⚡',
+  Higiene: '✨',
   Hunger: '🍖',
   Happiness: '😊',
   Energy: '⚡',

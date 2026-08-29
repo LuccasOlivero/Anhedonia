@@ -27,7 +27,7 @@ export function OnboardingForm() {
     return (
       <div className={`flex flex-col items-center gap-4 ${cardClass} p-10`}>
         <span className="animate-wobble text-5xl">🥚</span>
-        <p className="text-lg font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Incubating your pet...</p>
+        <p className="text-lg font-[family-name:var(--font-display)] font-bold text-[#4A3222]">Incubando a tu mascota...</p>
       </div>
     );
   }
@@ -35,11 +35,11 @@ export function OnboardingForm() {
   return (
     <form action={formAction} className={`mx-auto w-full max-w-sm space-y-4 ${cardClass}`}>
       <label className="block space-y-1">
-        <span className={labelClass}>Pet name</span>
-        <input type="text" name="name" required className={inputClass} />
+        <span className={labelClass}>Nombre de tu mascota</span>
+        <input type="text" name="name" required className={inputClass} placeholder="Ej: Milo, Luna, Rocco..." />
       </label>
       <label className="block space-y-1">
-        <span className={labelClass}>Photos (1-3, max 5MB each)</span>
+        <span className={labelClass}>Fotos (1 a 3, máx. 5MB cada una)</span>
         <input
           type="file"
           name="photos"
@@ -53,7 +53,7 @@ export function OnboardingForm() {
       {previews.length > 0 && (
         <div className="flex gap-2">
           {previews.map((src) => (
-            <img key={src} src={src} alt="Pet preview" className="h-16 w-16 rounded-2xl border-2 border-[#C89B6C] object-cover" />
+            <img key={src} src={src} alt="Vista previa de tu mascota" className="h-16 w-16 rounded-2xl border-2 border-[#C89B6C] object-cover" />
           ))}
         </div>
       )}
@@ -64,7 +64,7 @@ export function OnboardingForm() {
         disabled={!!clientError}
         className="w-full rounded-full bg-gradient-to-b from-[#FFB199] to-[#FF8966] py-2 font-[family-name:var(--font-display)] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.25)] transition-all active:translate-y-[3px] active:shadow-[0_1px_0_rgba(0,0,0,0.25)] disabled:opacity-50"
       >
-        Create my pet
+        Crear mi mascota
       </button>
     </form>
   );
