@@ -4,6 +4,8 @@ import type { PetRow } from './pet-engine';
 export interface NotificationPreferences {
   daily_bonus_email_enabled: boolean;
   last_daily_bonus_email_sent_date: string | null;
+  streak_surprise_email_enabled: boolean;
+  last_streak_surprise_email_sent_date: string | null;
 }
 
 // Eligibility check for the one working notification trigger this feature

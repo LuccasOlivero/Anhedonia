@@ -24,6 +24,7 @@ function makePet(overrides: Partial<PetRow> = {}): PetRow {
     bond_score: 0,
     bond_streak_days: 0,
     last_bond_sync_date: null,
+    last_streak_milestone_claimed: 0,
     ...overrides,
   };
 }
@@ -32,6 +33,8 @@ function makePrefs(overrides: Partial<NotificationPreferences> = {}): Notificati
   return {
     daily_bonus_email_enabled: true,
     last_daily_bonus_email_sent_date: null,
+    streak_surprise_email_enabled: false,
+    last_streak_surprise_email_sent_date: null,
     ...overrides,
   };
 }

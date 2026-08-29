@@ -23,6 +23,7 @@ function makePet(overrides: Partial<PetRow> = {}): PetRow {
     bond_score: 0,
     bond_streak_days: 0,
     last_bond_sync_date: null,
+    last_streak_milestone_claimed: 0,
     ...overrides,
   };
 }

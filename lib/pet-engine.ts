@@ -25,6 +25,7 @@ export interface PetRow {
   bond_score: number;
   bond_streak_days: number;
   last_bond_sync_date: string | null;
+  last_streak_milestone_claimed: number;
 }
 
 export const DECAY_PER_HOUR = {
