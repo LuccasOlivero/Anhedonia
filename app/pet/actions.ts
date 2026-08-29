@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import {
   computeCurrentStats,
   computeIsSick,
+  computeMood,
   feed as feedStats,
   play as playStats,
   bathe as batheStats,
@@ -13,6 +14,7 @@ import {
   type Stats,
 } from '@/lib/pet-engine';
 import { COINS_PER_CARE_ACTION, type MissionEventType } from '@/lib/missions';
+import { getAvailableStreakReward } from '@/lib/attachment';
 
 async function loadPet(): Promise<{ error: string } | { pet: PetRow }> {
   const supabase = await createClient();
@@ -184,3 +186,59 @@ export async function medicine() {
   revalidatePath('/pet');
   return { error: null };
 }
+
+export async function claimStreakRewardAction(): Promise<{ success?: boolean; coins?: number; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'No autorizado' };
+
+  const { data: pet } = await supabase
+    .from('pets')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!pet) return { error: 'Mascota no encontrada' };
+
+  const petRow = pet as PetRow;
+  const reward = getAvailableStreakReward(petRow);
+  if (!reward) return { error: 'No hay ninguna recompensa disponible' };
+
+  const newCoins = (petRow.coins || 0) + reward.coins;
+  const now = new Date();
+  const nowIso = now.toISOString();
+
+  // 1. Update pet coins & last_streak_milestone_claimed
+  const { error: petUpdateError } = await supabase
+    .from('pets')
+    .update({
+      coins: newCoins,
+      last_streak_milestone_claimed: reward.milestone,
+    })
+    .eq('id', petRow.id);
+
+  if (petUpdateError) return { error: 'Error al actualizar las monedas' };
+
+  // 2. Insert memorial note into diary_entries
+  const stats = computeCurrentStats(petRow, now);
+  const isSick = computeIsSick(petRow, now);
+  const moodSnapshot = computeMood(stats, isSick, petRow.is_sleeping);
+
+  const { error: diaryError } = await supabase.from('diary_entries').insert({
+    pet_id: petRow.id,
+    user_id: user.id,
+    entry_type: 'note',
+    mood_snapshot: moodSnapshot,
+    text: `${reward.diaryTitle}\n${reward.diaryContent}`,
+    occurred_at: nowIso,
+  });
+
+  if (diaryError) {
+    console.error('claimStreakRewardAction: failed to insert diary entry', diaryError);
+  }
+
+  revalidatePath('/pet');
+  revalidatePath('/pet/diary');
+  return { success: true, coins: reward.coins };
+}
+
