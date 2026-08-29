@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { PetRow } from '@/lib/pet-engine';
 import { NotificationToggle } from './NotificationToggle';
+import { setDailyBonusEmailEnabled, toggleStreakSurpriseEmailAction } from './actions';
 
 const cardClass =
   'rounded-[2rem] border-8 border-[#6B4226] ring-4 ring-inset ring-[#C89B6C] bg-[#FFF9EC] p-6 shadow-[inset_0_3px_6px_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.25)]';
@@ -22,11 +23,12 @@ export default async function NotificationsPage() {
   // than backfilled.
   const { data: prefs } = await supabase
     .from('notification_preferences')
-    .select('daily_bonus_email_enabled')
+    .select('daily_bonus_email_enabled, streak_surprise_email_enabled')
     .eq('user_id', user.id)
     .maybeSingle();
 
   const dailyBonusEmailEnabled = prefs?.daily_bonus_email_enabled ?? false;
+  const streakSurpriseEmailEnabled = prefs?.streak_surprise_email_enabled ?? false;
 
   return (
     <main className="flex min-h-screen flex-col items-center gap-6 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-10">
@@ -41,7 +43,21 @@ export default async function NotificationsPage() {
         </div>
 
         <div className={cardClass}>
-          <NotificationToggle initialEnabled={dailyBonusEmailEnabled} />
+          <div className="space-y-6">
+            <NotificationToggle
+              id="daily-bonus-email"
+              label="Avisarme cuando mi bono diario esté listo"
+              initialEnabled={dailyBonusEmailEnabled}
+              onToggle={setDailyBonusEmailEnabled}
+            />
+            <hr className="border-t-2 border-[#6B4226]/15" />
+            <NotificationToggle
+              id="streak-surprise-email"
+              label="Avisarme cuando mi mascota tenga un regalo o sorpresa"
+              initialEnabled={streakSurpriseEmailEnabled}
+              onToggle={toggleStreakSurpriseEmailAction}
+            />
+          </div>
         </div>
       </div>
     </main>

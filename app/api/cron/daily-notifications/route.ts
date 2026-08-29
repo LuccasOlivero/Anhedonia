@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendEmail } from '@/lib/email';
-import { shouldSendDailyBonusEmail, type NotificationPreferences } from '@/lib/notifications';
+import {
+  shouldSendDailyBonusEmail,
+  shouldSendStreakSurpriseEmail,
+  type NotificationPreferences,
+} from '@/lib/notifications';
+import { getAvailableStreakReward } from '@/lib/attachment';
 import { computePeriodKey } from '@/lib/missions';
 import type { PetRow } from '@/lib/pet-engine';
 
@@ -15,10 +20,13 @@ export const maxDuration = 60;
 
 interface NotificationPreferenceRow {
   user_id: string;
+  daily_bonus_email_enabled: boolean;
   last_daily_bonus_email_sent_date: string | null;
+  streak_surprise_email_enabled: boolean;
+  last_streak_surprise_email_sent_date: string | null;
 }
 
-const SUBJECT = '🎁 Tu bono diario te espera';
+const DAILY_BONUS_SUBJECT = '🎁 Tu bono diario te espera';
 
 function resolveAppUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -29,7 +37,7 @@ function resolveAppUrl(): string {
   return 'http://localhost:3000';
 }
 
-function buildEmailHtml(): string {
+function buildDailyBonusEmailHtml(): string {
   const appUrl = resolveAppUrl();
   return `<div style="font-family: sans-serif; font-size: 16px; line-height: 1.5; color: #4A3222;">
   <p>¡Hola! Tu bono diario de monedas ya está disponible. Pasá a buscarlo cuando quieras 🎁</p>
@@ -42,6 +50,23 @@ function buildEmailHtml(): string {
     </a>
   </p>
 </div>`;
+}
+
+function buildStreakSurpriseEmailHtml(petName: string): string {
+  const appUrl = resolveAppUrl();
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background: #FFF9EC; border: 4px solid #6B4226; border-radius: 16px;">
+      <h1 style="color: #4A3222; font-size: 20px;">¡Hola!</h1>
+      <p style="color: #4A3222; font-size: 16px; line-height: 1.5;">
+        ${petName} alcanzó un hito de cuidado contigo y te preparó un regalo especial en su casita. Pasá a buscarlo cuando quieras 🎁.
+      </p>
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="${appUrl}/pet" style="display: inline-block; background: #FCD34D; color: #4A3222; font-weight: bold; padding: 12px 24px; border-radius: 12px; text-decoration: none; border: 2px solid #6B4226;">
+          Ver la sorpresa de ${petName}
+        </a>
+      </div>
+    </div>
+  `;
 }
 
 // Vercel Cron always invokes this route with HTTP GET (see vercel.json),
@@ -67,8 +92,8 @@ async function handleDailyNotifications(request: NextRequest): Promise<NextRespo
 
   const { data: prefsData, error: prefsError } = await supabase
     .from('notification_preferences')
-    .select('user_id, last_daily_bonus_email_sent_date')
-    .eq('daily_bonus_email_enabled', true);
+    .select('user_id, daily_bonus_email_enabled, last_daily_bonus_email_sent_date, streak_surprise_email_enabled, last_streak_surprise_email_sent_date')
+    .or('daily_bonus_email_enabled.eq.true,streak_surprise_email_enabled.eq.true');
 
   if (prefsError) {
     console.error('daily-notifications cron: failed to load notification preferences', prefsError);
@@ -92,8 +117,6 @@ async function handleDailyNotifications(request: NextRequest): Promise<NextRespo
   const pets = (petsData ?? []) as PetRow[];
   const petByUserId = new Map(pets.map((pet) => [pet.user_id, pet]));
 
-  const html = buildEmailHtml();
-
   for (const prefRow of prefsRows) {
     // A user could theoretically have opted in but have no pet yet (should
     // not happen in practice, since onboarding always creates one) — skip
@@ -106,11 +129,16 @@ async function handleDailyNotifications(request: NextRequest): Promise<NextRespo
     }
 
     const prefs: NotificationPreferences = {
-      daily_bonus_email_enabled: true,
-      last_daily_bonus_email_sent_date: prefRow.last_daily_bonus_email_sent_date,
+      daily_bonus_email_enabled: prefRow.daily_bonus_email_enabled ?? false,
+      last_daily_bonus_email_sent_date: prefRow.last_daily_bonus_email_sent_date ?? null,
+      streak_surprise_email_enabled: prefRow.streak_surprise_email_enabled ?? false,
+      last_streak_surprise_email_sent_date: prefRow.last_streak_surprise_email_sent_date ?? null,
     };
 
-    if (!shouldSendDailyBonusEmail(pet, prefs, now)) {
+    const shouldSendDaily = shouldSendDailyBonusEmail(pet, prefs, now);
+    const shouldSendStreak = shouldSendStreakSurpriseEmail(pet, prefs, now);
+
+    if (!shouldSendDaily && !shouldSendStreak) {
       skipped += 1;
       continue;
     }
@@ -118,34 +146,62 @@ async function handleDailyNotifications(request: NextRequest): Promise<NextRespo
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(prefRow.user_id);
     if (userError || !userData?.user?.email) {
       console.error('daily-notifications cron: failed to look up user email', prefRow.user_id, userError);
-      failed += 1;
+      if (shouldSendDaily) failed += 1;
+      if (shouldSendStreak) failed += 1;
       continue;
     }
 
-    const { error: sendError } = await sendEmail(userData.user.email, SUBJECT, html);
-    if (sendError) {
-      console.error('daily-notifications cron: failed to send email', prefRow.user_id, sendError);
-      failed += 1;
-      continue;
+    const userEmail = userData.user.email;
+
+    if (shouldSendDaily) {
+      const html = buildDailyBonusEmailHtml();
+      const { error: sendError } = await sendEmail(userEmail, DAILY_BONUS_SUBJECT, html);
+      if (sendError) {
+        console.error('daily-notifications cron: failed to send daily bonus email', prefRow.user_id, sendError);
+        failed += 1;
+      } else {
+        sent += 1;
+        const { error: updateError } = await supabase
+          .from('notification_preferences')
+          .update({ last_daily_bonus_email_sent_date: todayKey })
+          .eq('user_id', prefRow.user_id);
+
+        if (updateError) {
+          console.error(
+            'daily-notifications cron: email sent but failed to update last_daily_bonus_email_sent_date',
+            prefRow.user_id,
+            updateError
+          );
+        }
+      }
     }
 
-    // The email genuinely went out — count it as sent even if the
-    // status-update write below fails. A failed status-update risks a
-    // duplicate email on the next cron run, which is an accepted, documented
-    // limitation, not a crash.
-    sent += 1;
+    if (shouldSendStreak) {
+      const availableReward = getAvailableStreakReward(pet);
+      if (availableReward) {
+        const subject = `🎁 ${pet.name} tiene una sorpresa especial para vos`;
+        const html = buildStreakSurpriseEmailHtml(pet.name);
 
-    const { error: updateError } = await supabase
-      .from('notification_preferences')
-      .update({ last_daily_bonus_email_sent_date: todayKey })
-      .eq('user_id', prefRow.user_id);
+        const { error: sendError } = await sendEmail(userEmail, subject, html);
+        if (sendError) {
+          console.error('daily-notifications cron: failed to send streak surprise email', prefRow.user_id, sendError);
+          failed += 1;
+        } else {
+          sent += 1;
+          const { error: updateError } = await supabase
+            .from('notification_preferences')
+            .update({ last_streak_surprise_email_sent_date: todayKey })
+            .eq('user_id', prefRow.user_id);
 
-    if (updateError) {
-      console.error(
-        'daily-notifications cron: email sent but failed to update last_daily_bonus_email_sent_date',
-        prefRow.user_id,
-        updateError
-      );
+          if (updateError) {
+            console.error(
+              'daily-notifications cron: email sent but failed to update last_streak_surprise_email_sent_date',
+              prefRow.user_id,
+              updateError
+            );
+          }
+        }
+      }
     }
   }
 
