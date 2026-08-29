@@ -43,6 +43,7 @@ export async function placeItem(itemId: string, positionXPct: number): Promise<{
   if (error) return { error: error.message };
 
   revalidatePath('/pet/casa');
+  revalidatePath('/pet');
   return { error: null };
 }
 
@@ -61,5 +62,6 @@ export async function removePlacedItem(placedItemId: string): Promise<{ error: s
   if (error) return { error: error.message };
 
   revalidatePath('/pet/casa');
+  revalidatePath('/pet');
   return { error: null };
 }
