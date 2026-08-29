@@ -2,9 +2,25 @@ import { LoginForm } from './LoginForm';
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-[#BEE7F5] to-[#B7E4A0] px-4 py-12">
-      <h1 className="text-4xl font-[family-name:var(--font-display)] font-bold text-[#4A3222]">🐾 Pets Forever</h1>
-      <LoginForm />
+    <main className="min-h-screen pet-sky-bg flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-x-hidden">
+      <div className="w-full max-w-md flex flex-col items-center gap-6 animate-pet-pop">
+        {/* Gleaming Logo Booth Header */}
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="inline-flex items-center gap-2 sm:gap-3 px-5 sm:px-7 py-2 sm:py-2.5 rounded-full border-4 border-[#58331A] bg-gradient-to-b from-[#804A26] to-[#58331A] text-[#FFF9EC] shadow-[inset_0_2px_4px_rgba(0,0,0,0.45),0_8px_20px_rgba(0,0,0,0.35)]">
+            <span className="text-2xl sm:text-3xl filter drop-shadow animate-wobble">🐾</span>
+            <h1 className="text-3xl sm:text-4xl font-[family-name:var(--font-display)] font-extrabold tracking-wide text-transparent bg-clip-text bg-gradient-to-b from-[#FFFDF8] via-[#FFEBB3] to-[#F5D480] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              Pets Forever
+            </h1>
+            <span className="text-xl sm:text-2xl filter drop-shadow">✨</span>
+          </div>
+          <p className="text-xs sm:text-sm font-semibold text-[#58331A] bg-[#FFF9EC]/90 px-4 py-1 rounded-full border border-[#C89B6C]/40 shadow-sm backdrop-blur-xs">
+            ¡Tu mascota virtual favorita te está esperando!
+          </p>
+        </div>
+
+        {/* Game Booth Container */}
+        <LoginForm />
+      </div>
     </main>
   );
 }
